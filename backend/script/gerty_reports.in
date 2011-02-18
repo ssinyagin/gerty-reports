@@ -1,0 +1,23 @@
+#!@PERL@
+
+use strict;
+use warnings;
+
+use File::Basename 'dirname';
+use File::Spec;
+
+use lib join '/', File::Spec->splitdir(dirname(__FILE__)), '..', 'lib';
+
+# Check if Mojo is installed
+eval 'use Mojolicious::Commands';
+if( $@ )
+{
+    die('Cannot load Perl module: Mojolicious::Commands. Error message: ' . $@);
+}
+
+# Application
+$ENV{MOJO_APP} ||= 'GertyReports';
+
+# Start commands
+Mojolicious::Commands->start;
+

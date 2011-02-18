@@ -1,0 +1,17 @@
+*.swp
+DIST_REVISION
+aclocal.m4
+autom4te.cache
+bin/gerty
+config.log
+config.status
+configure
+configure.lineno
+gerty-reports*.tar.gz
+setup_tools/substvars.sh
+Makefile
+Makefile.in
+*/Makefile
+*/Makefile.in
+backend/gerty_reports.json
+backend/script/gerty_reports
