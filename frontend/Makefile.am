@@ -65,8 +65,8 @@ qx-build: generate.py
 
 install-data-local: build
 	cd build && find . -type d -print >../list.tmp
-	for d in `list.tmp`; do \
-	  $(mkinstalldirs) $(DESTDIR)$(frontenddir)/$$d; done; \
+	for d in `cat list.tmp`; do \
+	  $(mkinstalldirs) $(DESTDIR)$(frontenddir)/$$d; done
 	cd build && find . -type f -print >../list.tmp
 	for f in `cat list.tmp`; do \
 	  $(INSTALL_DATA) build/$$f $(DESTDIR)$(frontenddir)/$$f; done; \
