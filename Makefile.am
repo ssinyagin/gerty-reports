@@ -30,3 +30,13 @@ DISTCLEANFILES = $(VARSAVE)
 dist-hook:
 	date >DIST_REVISION
 	cp DIST_REVISION $(distdir)/
+
+
+qx-source-all:
+	cd frontend; $(MAKE) qx-source-all
+
+qx-source:
+	cd frontend; $(MAKE) qx-source
+
+qx-build:
+	cd frontend; $(MAKE) qx-build

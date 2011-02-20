@@ -4,7 +4,8 @@ use strict;
 use Mojo::Base 'Mojolicious';
 use Mojo::JSON;
 use IO::File;
-use GertyReports::JsonRpcService;
+
+use GertyReports::RPC::Common;
 
 # This method will run once at server start
 sub startup
@@ -16,7 +17,7 @@ sub startup
     my $r = $self->routes;
 
     my $services = {
-        'GertyReports' => new GertyReports::JsonRpcService(app => $self),
+        'Common' => new GertyReports::RPC::Common(app => $self),
     };
             
     $r->route('/' . $config->{'jsonrpcpath'})->to(

@@ -27,6 +27,7 @@ AC_PATH_PROG(PERL, perl, no)
 AC_PATH_PROG(PYTHON, python, no)
 AC_PATH_PROG(SED, sed, no)
 AC_PATH_PROG(RM, rm, no)
+AC_PATH_PROG(CHMOD, chmod, no)
 
 
 AC_ARG_ENABLE(pkgonly,
@@ -65,7 +66,7 @@ if test "$enable_pkgonly" != yes; then
 fi
 
 AC_ARG_WITH(qooxdoo-sdk,
-        [AC_HELP_STRING(--with-qooxdoo-sdk=DIR,Qooxdoo SDK location)],
+        [AC_HELP_STRING(--with-qooxdoo-sdk=DIR,absolute path to Qooxdoo SDK)],
         [if test "$enable_pkgonly" != yes; then
            AC_MSG_CHECKING([validity of Qooxdoo SDK])
            if test ! -f ${with_qooxdoo_sdk}/tool/bin/generator.py; then
@@ -81,7 +82,14 @@ AC_ARG_WITH(qooxdoo-sdk,
            AC_MSG_RESULT([Ok])
          fi])
 
+if test x"${with_qooxdoo_sdk}" != x; then
+  use_qooxdoo_sdk=1
+else
+  use_qooxdoo_sdk=0
+fi
 
+AC_SUBST(QOOXDOO_SDK, [${with_qooxdoo_sdk}])
+AC_SUBST(USE_QOOXDOO_SDK, [${use_qooxdoo_sdk}])
 
 AC_ARG_VAR(frontenddir, [[PREFIX/frontend] Frontend directory])
 if test -z "$frontenddir"; then

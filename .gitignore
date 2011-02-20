@@ -15,3 +15,8 @@ Makefile.in
 */Makefile.in
 backend/gerty_reports.json
 backend/script/gerty_reports
+frontend/build/
+frontend/source/script/
+frontend/config.json
+frontend/generate.py
+frontend/source/index.html

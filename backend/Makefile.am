@@ -38,6 +38,7 @@ EXTRA_DIST = \
 
 script/gerty_reports: script/gerty_reports.in
 	$(SUBST) script/gerty_reports.in > script/gerty_reports
+	$(CHMOD) a+x script/gerty_reports
 
 
 gerty_reports.json: gerty_reports.json.in
