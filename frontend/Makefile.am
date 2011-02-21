@@ -78,12 +78,13 @@ uninstall-local: build
 	  rm -r $(DESTDIR)$(frontenddir)/$$d; done
 	rm -f list.tmp
 
+FRONTEND_DIST_DIRS = build source/class source/resource source/translation
 
 dist-hook: build
-	find build -type d -print >list.tmp
+	find $(FRONTEND_DIST_DIRS) -type d -print >list.tmp
 	for d in `cat list.tmp`; do \
 	  mkdir $(distdir)/$$d; done
-	find build -type f -print >list.tmp
+	find $(FRONTEND_DIST_DIRS) -type f -print >list.tmp
 	for f in `cat list.tmp`; do \
 	  cp $$f $(distdir)/$$f; done
 	rm -f list.tmp
