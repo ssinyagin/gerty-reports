@@ -1,3 +1,7 @@
+/*
+#asset(qx/icon/${qx.icontheme}/22/apps/utilities-statistics.png)
+*/
+
 qx.Class.define
 ("gertyreports.ReportsMenuItem",
  {
@@ -6,7 +10,8 @@ qx.Class.define
      // reportdef is a hash: name, class, description
 
      construct : function(reportdef, appwindow) {         
-         this.base(arguments, reportdef.name);
+         this.base(arguments, reportdef.name,
+                   "icon/22/apps/utilities-statistics.png");
          
          this.appWindow = appwindow;
          this.reportDef = reportdef;
