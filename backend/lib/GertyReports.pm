@@ -13,12 +13,82 @@ sub startup
     my $self = shift;
     
     my $config = $self->plugin('json_config');
+
+    # Initialize the reports from siteconfig
+    my $known_reports = $self->siteconfig('reports');
+    my $enabled_reports = {};
+    
+    foreach my $report (@{$known_reports})
+    {
+        if( $self->siteconfig($report . '.enabled') )
+        {
+            $self->log->debug('Report enabled in siteconfig: ' . $report);
+            
+            my $ok = 1;
+            my $report_params = {};
+            foreach my $attr ('dsn', 'username', 'password', 'history_days')
+            {
+                my $key = $report . '.' . $attr;
+                my $val = $self->siteconfig($key);
+                if( not defined($val) )
+                {
+                    $self->log->error
+                        ('Missing a mandatory report attribute: ' . $key);
+                    $ok = 0;
+                }
+                else
+                {
+                    $report_params->{$attr} = $val;
+                }
+            }
+
+            if($ok)
+            {
+                $enabled_reports->{$report} = $report_params;
+            }
+            else
+            {
+                $self->log->error
+                    ('Failed to initialize report: ' . $report);
+            }
+        }
+    }
+
+    # RPC services
+    
+    my $services = {
+        'Common' => new GertyReports::RPC::Common('enabled_reports' =>
+                                                  $enabled_reports)            
+    };
+
+    while( my ($report, $attrs) = each%{$enabled_reports} )
+    {
+        my $module = 'GertyReports::RPC::' . $report;
+        $self->log->debug('Loading report module: ' . $module);
+
+        eval 'require ' . $module;
+        if( $@ )
+        {
+            $self->log->error
+                ('Failed to load ' . $module . ': ' . $@);
+        }
+        
+        my $handle = eval 'new ' . $module . '(%{$attrs})';
+        if( $@ )
+        {
+            $self->log->error
+                ('Failed to initialize ' . $module . ': ' . $@);
+        }
+        else
+        {
+            $services->{$report} = $handle;
+            $attrs->{'report_name'} = $handle->report_name();
+            $attrs->{'report_description'} = $handle->report_description();
+        }
+    }
     
     my $r = $self->routes;
 
-    my $services = {
-        'Common' => new GertyReports::RPC::Common(app => $self),
-    };
             
     $r->route('/' . $config->{'jsonrpcpath'})->to(
         class => 'Jsonrpc',

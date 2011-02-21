@@ -1,16 +1,10 @@
 package GertyReports::RPC::Common;
 
-use strict;
-use base qw(Mojo::Base);
+use Mojo::Base -base;
 
+has 'enabled_reports';
 
-# if this attribute is created it will hold the mojo cookie session hash
-__PACKAGE__->attr('_mojo_session');
-# if this attribute exists it will provide access to the stash
-__PACKAGE__->attr('_mojo_stash');
-# optional access_check method the method is called right before the actual
-# method is called but after the _mojo_session and _mojo_stash properties
-# are assigned
+has '_check_access';
 
 
 my %_methods_allowed =
@@ -29,16 +23,20 @@ sub _check_access
 sub listreports
 {
     my $self = shift;
-    return
-        [
-         {class => 'X1',
-          name => 'x1 report',
-          description => 'reporting x1 data'},
-         
-         {class => 'X2',
-          name => 'x2 report',
-          description => 'reporting x2 data'},
-        ];
+
+    my $ret = [];
+
+    my $reps = $self->enabled_reports;
+    
+    foreach my $report (sort keys %{$reps})
+    {
+        my $r = {'class' => $report,
+                 'name' => $reps->{$report}{'report_name'},
+                 'description' => $reps->{$report}{'report_description'}};
+        push(@{$ret}, $r);
+    }
+    
+    return $ret;    
 }
 
 

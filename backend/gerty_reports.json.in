@@ -1,6 +1,4 @@
 {
-    "backenddir"       : "@backenddir@",
-    "backendurl"       : "@backendurl@",
     "jsonrpcpath"      : "@jsonrpcpath@",
-    "backendsitecfg"   : "@backendsitecfg@"
+    "backendsitecfg"   : "@backendsitecfg@"    
 }
