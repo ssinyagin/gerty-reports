@@ -16,12 +16,13 @@ qx.Class.define
                  // Press F7 to toggle visibility
                  qx.log.appender.Console;
              }
-             
-             this.getRoot().add(this.getMenuBar());
+
+             var root = this.getRoot();
+             this.addMenuBar(root);
          },
 
          // Top-level toolbar         
-         getMenuBar : function()
+         addMenuBar : function(appwindow)
          {
              var frame = new qx.ui.container.Composite(new qx.ui.layout.Grow);
              frame.setDecorator("main");
@@ -33,8 +34,12 @@ qx.Class.define
              rpc.callAsync(
                  function(result)
                  {
-                     for (var i=0;i<result.length;i++){
-                         var item = new qx.ui.menu.Button(result[i]);
+                     // result is array of hashes: name, class, description
+                     for (var i=0;i<result.length;i++) {
+                         rpc.debug("Adding menu item: " + result[i].name);
+                         var item =
+                             new gertyreports.ReportsMenuItem(
+                                 result[i], appwindow);                         
                          reportsMenu.add(item);
                      }
                  },
@@ -58,8 +63,8 @@ qx.Class.define
              toolbar.add(menuPart);
              toolbar.addSpacer();
              toolbar.add(helpPart);
-             
-             return frame;
+
+             appwindow.add(frame);
          }
      }
  });

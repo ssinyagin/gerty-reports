@@ -29,7 +29,16 @@ sub _check_access
 sub listreports
 {
     my $self = shift;
-    return ['X1', 'X2'];
+    return
+        [
+         {class => 'X1',
+          name => 'x1 report',
+          description => 'reporting x1 data'},
+         
+         {class => 'X2',
+          name => 'x2 report',
+          description => 'reporting x2 data'},
+        ];
 }
 
 
