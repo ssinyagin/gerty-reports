@@ -6,13 +6,31 @@ Its purpose is to present interactive data drilling reports for SQL
 data collected by Gerty.
 
 
-Usage:
-------
+Pre-requisites (ubuntu/debian):
+-------------------------------
+
+sudo apt-get install \
+ git autoconf automake libtool \
+ libdbi-perl libdbd-mysql-perl  mysql-server \
+ apache2 apache2-mpm-worker libapache2-mod-fastcgi
+
+sudo a2enmod fastcgi
+sudo /etc/init.d/apache2 force-reload
+
+sudo mkdir /opt/qx
+sudo chown USER /opt/qx
+cd /opt/qx/
+mkdir build share
+# unpack qooxdoo-1.3-sdk.zip  into /opt/px/share
+
+
+Installing from sources:
+------------------------
 
 cd /opt/qx/build
 git clone git://github.com/ssinyagin/gerty-reports.git
 cd gerty-reports
-perl -I `pwd`/setup_tools -MCPAN -e 'install Bundle::GertyReports'
+sudo perl -I `pwd`/setup_tools -MCPAN -e 'install Bundle::GertyReports'
 autoreconf
 ./configure -prefix=/opt/qx/share/gerty-reports \
   --with-qooxdoo-sdk=/opt/qx/share/qooxdoo-1.3-sdk \
@@ -26,11 +44,14 @@ make install
 Apache Virtual Host:
 --------------------
 
+vi /etc/apache2/sites-available/qx1.domain.net
+
+#######
 <VirtualHost *:80>
     ServerName qx1.domain.net
     DocumentRoot "/opt/qx/share/gerty-reports/frontend/"
-    ErrorLog "var/log/qx1-error_log"
-    CustomLog "var/log/qx1-access_log" common
+    ErrorLog "/var/log/apache2/qx2-error_log"
+    CustomLog "/var/log/apache2/qx2-access_log" common
     AddHandler fastcgi-script fcgi
     FastCgiServer /opt/qx/share/gerty-reports/backend/script/gerty_reports  \
           -processes 2
@@ -41,4 +62,11 @@ Apache Virtual Host:
       Allow from all
     </Location>
 
+    # SECURITY LEAK!
+    # Only for development
+    Alias /x/ /opt/qx/
 </VirtualHost>
+#######
+
+a2ensite qx2.txlab.net
+/etc/init.d/apache2 restart
