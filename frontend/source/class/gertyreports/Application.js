@@ -31,7 +31,7 @@ qx.Class.define
              
              var rpc = gertyreports.BackendConnection.getInstance();
              rpc.setServiceName('Common');
-             rpc.callAsync(
+             rpc.callAsyncSmart(
                  function(result)
                  {
                      // result is array of hashes: name, class, description

@@ -82,6 +82,8 @@ sub search_host
 
     $limit = 50 unless defined($limit);
 
+    $self->log->debug('RPC call: search_host, ' . $pattern . ', ' . $limit);
+    
     if( not $self->connect() )
     {
         return undef;
@@ -103,6 +105,7 @@ sub search_host
 
     $self->disconnect();
 
+    $self->log->debug('RPC result: ' . scalar(@{$ret}) . ' items');
     return $ret;
 }
 

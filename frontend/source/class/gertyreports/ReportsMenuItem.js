@@ -9,25 +9,25 @@ qx.Class.define
 
      // reportdef is a hash: name, class, description
 
-     construct : function(reportdef, appwindow) {         
-         this.base(arguments, reportdef.name,
+     construct : function(reportdef, desktop) {         
+         this.base(arguments, reportdef['name'],
                    "icon/22/apps/utilities-statistics.png");
          
-         this.appWindow = appwindow;
+         this.desktop = desktop;
          this.reportDef = reportdef;
 
          this.addListener("execute", function(){
-             this.debug("Menu selected: " + this.reportDef.name);
-             var win =
-                 new gertyreports.ReportWindow(this.reportDef);
-             this.appWindow.add(win,  {left:20, top:30});
+             this.debug("Menu selected: " + this.reportDef['name']);
+             eval('new gertyreports.' +
+                  this.reportDef['class'] +
+                  '(this.reportDef[\'description\'], desktop)');
          });   
          return this;
      },
-     
+
      members :
      {
-         appWindow: null,
+         desktop: null,
          reportDef: null
      }          
  });
