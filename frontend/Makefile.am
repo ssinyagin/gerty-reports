@@ -25,7 +25,8 @@ noinst_SCRIPTS = \
 
 noinst_DATA = \
 	config.json \
-	source/index.html
+	source/index.html \
+	build/index.html
 
 
 CLEANFILES = \
@@ -49,6 +50,9 @@ config.json: config.json.in
 
 source/index.html: source/index.html.in
 	$(SUBST) source/index.html.in > source/index.html
+
+build/index.html: source/index.html.in build
+	$(SUBST) source/index.html.in > build/index.html
 
 qx-source-all: generate.py
 	$(PYTHON) generate.py source-all
