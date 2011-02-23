@@ -4,8 +4,6 @@ use Mojo::Base -base;
 
 has 'enabled_reports';
 
-has 'allow_rpc_access';
-
 
 my %methods_allowed =
     ('listreports' => 1);

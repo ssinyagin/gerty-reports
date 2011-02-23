@@ -8,7 +8,6 @@ has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
-has 'allow_rpc_access';
 
 
 
