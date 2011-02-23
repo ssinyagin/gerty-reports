@@ -8,19 +8,19 @@ has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
-has '_check_access';
+has 'allow_rpc_access';
 
 
 
-my %_methods_allowed =
+my %methods_allowed =
     ('search_host' => 1);
 
-sub _check_access
+sub allow_rpc_access
 {
     my $self = shift;
     my $method = shift;
 
-    return $_methods_allowed{$method};
+    return $methods_allowed{$method};
 }
 
 

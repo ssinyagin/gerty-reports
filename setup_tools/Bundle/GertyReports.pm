@@ -35,7 +35,7 @@ C<perl -I `pwd`/setup_tools -MCPAN -e 'install Bundle::GertyReports'>
 =head1 CONTENTS
 
 Mojolicious 1.1
-MojoX::Dispatcher::Qooxdoo::Jsonrpc 0.54
+MojoX::Dispatcher::Qooxdoo::Jsonrpc 0.56
 
 =head1 AUTHOR
 
