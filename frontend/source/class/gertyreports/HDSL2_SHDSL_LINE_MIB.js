@@ -40,7 +40,7 @@ qx.Class.define
              searchField.setLiveUpdate(true);
              firstRow.add(searchField);
 
-             var secondRowGrid = new qx.ui.layout.Grid(8,2);
+             var secondRowGrid = new qx.ui.layout.Grid(15,6);
              var secondRow =
                  new qx.ui.container.Composite(secondRowGrid);
              secondRowGrid.setRowFlex(1,1);
