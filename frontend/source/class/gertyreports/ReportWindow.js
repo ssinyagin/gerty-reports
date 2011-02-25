@@ -5,35 +5,29 @@ qx.Class.define
 
      // reportdef is a hash: name, class, description
      
-     construct : function(title, desktop) {             
+     construct : function(title) {             
          this.base(arguments, title);
-
-         this.desktop = desktop;
 
          this.setLayout(new qx.ui.layout.Grow());
          this.setHeight(500);
          this.setWidth(600);
          this.open();
          
-         desktop.add(this, {
+         gertyreports.ReportWindow.desktop.add(this, {
              left: gertyreports.ReportWindow.next_window_top,
              top:  gertyreports.ReportWindow.next_window_left});
          gertyreports.ReportWindow.next_window_top += 30;
          gertyreports.ReportWindow.next_window_left += 30;
 
-         this.initialize();
+         this.initContent();
          
          return this;
      },
      
      statics : {
+         desktop : null,
          next_window_top : 30,
          next_window_left : 30
-     },
-
-     members :
-     {
-         desktop : null
      }
  });
 

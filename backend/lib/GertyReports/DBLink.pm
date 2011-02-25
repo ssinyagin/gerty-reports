@@ -35,7 +35,7 @@ sub connect
     {
         die('password attribute is missing');
     }
-
+        
     my $dbi_args = {
         'AutoCommit' => 1,
         'RaiseError' => 0,
@@ -72,6 +72,12 @@ sub disconnect
     }
 }
 
+
+sub is_mysql
+{
+    my $self = shift;
+    return ( $self->dsn =~ /mysql/o );
+}
 
 
 sub search_host

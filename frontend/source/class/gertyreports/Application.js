@@ -1,3 +1,6 @@
+/*
+#asset(qx/icon/${qx.icontheme}/22/apps/utilities-statistics.png)
+*/
 
 qx.Class.define
 ("gertyreports.Application",
@@ -18,6 +21,7 @@ qx.Class.define
              }
 
              var root = this.getRoot();
+             gertyreports.ReportWindow.desktop = root;
              this.addMenuBar(root);
          },
 
@@ -32,15 +36,48 @@ qx.Class.define
              var rpc = gertyreports.BackendConnection.getInstance();
              rpc.setServiceName('Common');
              rpc.callAsyncSmart(
-                 function(result)
+                 function(reports)
                  {
                      // result is array of hashes: name, class, description
-                     for (var i=0;i<result.length;i++) {
-                         rpc.debug("Adding menu item: " + result[i].name);
-                         var item =
-                             new gertyreports.ReportsMenuItem(
-                                 result[i], appwindow);                         
-                         reportsMenu.add(item);
+                     for (var i=0; i < reports.length; i++)
+                     {
+                         rpc.debug("Adding menu item: " + reports[i]["name"]);
+                         var button =
+                             new qx.ui.menu.Button(
+                                 reports[i].name,
+                                 "icon/22/apps/utilities-statistics.png");
+                         
+                         button.setUserData("report-class",
+                                            reports[i]["class"]);
+                         button.setUserData("report-descr",
+                                            reports[i]["description"]);
+                         
+                         button.addListener(
+                             "execute",
+                             function()
+                             {
+                                 var klassName =
+                                     "gertyreports." +
+                                     this.getUserData("report-class");
+                                 
+                                 this.debug("Launching report window: " +
+                                            klassName);
+                                 
+                                 var klass = qx.Class.getByName(klassName);
+                                 if( klass == null )
+                                 {
+                                     alert("Cannot load report class: " +
+                                           klassName);
+                                 }
+                                 else
+                                 {
+                                     new klass(
+                                         this.getUserData("report-descr"));
+                                 }
+                             },
+                             button);
+                         
+                         reportsMenu.add(button);
                      }
                  },
                  "listreports");
