@@ -10,12 +10,13 @@ qx.Class.define
 
          this.setLayout(new qx.ui.layout.Grow());
          this.setHeight(500);
-         this.setWidth(600);
+         this.setWidth(800);
+         this.setShowStatusbar(true);
          this.open();
          
          gertyreports.ReportWindow.desktop.add(this, {
-             left: gertyreports.ReportWindow.next_window_top,
-             top:  gertyreports.ReportWindow.next_window_left});
+             left: gertyreports.ReportWindow.next_window_left,
+             top:  gertyreports.ReportWindow.next_window_top});
          gertyreports.ReportWindow.next_window_top += 30;
          gertyreports.ReportWindow.next_window_left += 30;
 
@@ -26,7 +27,7 @@ qx.Class.define
      
      statics : {
          desktop : null,
-         next_window_top : 30,
+         next_window_top : 40,
          next_window_left : 30
      }
  });

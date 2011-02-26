@@ -1,6 +1,7 @@
 /*
 #asset(qx/icon/${qx.icontheme}/16/actions/system-search.png)
 #asset(qx/icon/${qx.icontheme}/16/apps/office-chart.png)
+#asset(qx/icon/Tango/22/actions/view-refresh.png)
 */
 
 qx.Class.define
@@ -21,10 +22,19 @@ qx.Class.define
 
          initSeachTab : function ()
          {
+             var statusBar = this;
+             
              var page = new qx.ui.tabview.Page(
                  "Search", "icon/16/actions/system-search.png");
              page.setLayout(new qx.ui.layout.Grow());
-             
+             page.addListener(
+                 "appear",
+                 function(e)
+                 {
+                     statusBar.setStatus(
+                         "Type in the first letters of device name");
+                 });
+
              var rowsContainer =
                  new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
              page.add(rowsContainer);
@@ -50,19 +60,13 @@ qx.Class.define
              secondRow.add(new qx.ui.basic.Label
                            ("Search results: "), {row:0, column:0});
              var hostList = new qx.ui.form.List();
+             hostList.setWidth(180);
              secondRow.add(hostList, {row:1, column:0});
-
-
-             secondRow.add(new qx.ui.basic.Label
-                           ("Ports: "), {row:2, column:0});
-             var portList = new qx.ui.form.List();
-             portList.setHeight(70);
-             secondRow.add(portList, {row:3, column:0});
 
 
              secondRow.add(
                  new qx.ui.basic.Label(
-                     "Statistics for last 14 days:"),
+                     "Line errors for the last 14 days:"),
                  {row:0, column:1});
 
              var statsContainer =
@@ -74,7 +78,12 @@ qx.Class.define
              hostinfoLabel.setRich(true);
              hostinfoLabel.setSelectable(true);
              statsContainer.add(hostinfoLabel);
+
              
+             var statsTable = new qx.ui.table.Table();
+             statsTable.setWidth(640);
+             statsTable.setStatusBarVisible(false);
+             statsContainer.add(statsTable, {flex : 1});
 
              var legendLabel = new qx.ui.basic.Label();
              legendLabel.setRich(true);
@@ -85,20 +94,16 @@ qx.Class.define
                      "ES, SES, LOSWS, UAS: daily average in percent of time");
              statsContainer.add(legendLabel);
 
-             var statsTable = new qx.ui.table.Table();
-             statsTable.set({width: 640});
-             statsContainer.add(statsTable, {flex : 1});
              
              // ***  bindings between widgets ***
 
              // bind search field with the hostList
              
-             var searchResults = new qx.data.Array();
              var searchListController =
-                 new qx.data.controller.List(searchResults, hostList);
+                 new qx.data.controller.List(null, hostList, "label");
 
              // make every input in the searchField update the hostList
-             // with 300ms delay
+             // with 200ms delay
 
              var searchTimer = qx.util.TimerManager.getInstance();
              var searchTimerId = null;
@@ -112,11 +117,12 @@ qx.Class.define
                          searchTimer.stop(searchTimerId);
                      }
 
+                     statusBar.setStatus("Searching...");
+                     
                      searchTimerId = searchTimer.start(
                          function(userData)
                          {
                              searchTimerId = null;
-                             searchResults.removeAll();
                              if( userData != null && userData.length > 0 )
                              {
                                  var rpc =
@@ -126,77 +132,43 @@ qx.Class.define
                                  rpc.callAsyncSmart(
                                      function(result)
                                      {
-                                         searchResults.append(result);
+                                         var model = 
+                                             qx.data.marshal.Json.createModel(
+                                                 result);
+                                         
+                                         searchListController.setModel(model);
+                                         
+                                         if( result.length == 50 )
+                                         {
+                                             statusBar.setStatus(
+                                                 "Search results limited " +
+                                                     "to 50 lines")
+                                         }
+                                         else
+                                         {
+                                             statusBar.setStatus(
+                                                 "Search results: " +
+                                                     result.length + " lines");
+                                         }
                                      },
-                                     "search_host", userData + '%', 50);
+                                     "search_hosts_and_lines",
+                                     userData + '%', 50);
                              }
                          },
                          0,
                          null,
                          e.getData(),
-                         300);
+                         200);
                  });
              
-
-             // bind hostList with portList
-
-             var portArray = new qx.data.Array();
-             var portListController =
-                 new qx.data.controller.List(portArray, portList);
              
-             // make every selection in hostList update portList 
+             // bind searchList with the statistics widget
              // with 300ms delay
-
-             var portTimer = qx.util.TimerManager.getInstance();
-             var portTimerId = null;
-
-             searchListController.addListener(
-                 "changeSelection",
-                 function()
-                 {
-                     if( portTimerId != null )
-                     {
-                         portTimer.stop(portTimerId);
-                     }
-
-                     portTimerId = portTimer.start(
-                         function(userData)
-                         {
-                             portTimerId = null;
-                             portArray.removeAll();
-                             if( userData != null && userData.length > 0 )
-                             {
-                                 var rpc =
-                                     gertyreports.BackendConnection.
-                                     getInstance();
-                                 rpc.setServiceName('HDSL2_SHDSL_LINE_MIB');
-                                 rpc.callAsyncSmart(
-                                     function(result)
-                                     {
-                                         if( result != null )
-                                         {
-                                             portArray.append(result);
-                                         }
-                                     },
-                                     "get_host_ports", userData);
-                             }
-                         },
-                         0,
-                         null,
-                         this.getSelection().getItem(0),
-                         300);
-                     
-                 },
-                 searchListController);
-
-             
-             // bind portList with the statistics widget
-             // with 500ms delay
 
              var statTimer = qx.util.TimerManager.getInstance();
              var statTimerId = null;
 
-             portListController.addListener(
+             searchListController.addListener(
                  "changeSelection",
                  function()
                  {
@@ -205,17 +177,18 @@ qx.Class.define
                          statTimer.stop(statTimerId);
                      }
 
-                     hostinfoLabel.setValue("Loading...");
+                     var selected = this.getSelection().getItem(0);
+                     if( selected != null )
+                     {
+                         statusBar.setStatus("Loading...");
                      
-                     statTimerId = statTimer.start(
-                         function(userData)
-                         {
-                             statTimerId = null;
-                             if( userData != null && userData.length > 0 )
+                         statTimerId = statTimer.start(
+                             function(userData)
                              {
-                                 var hostname = searchListController.
-                                     getSelection().getItem(0);
-                                 var intf = userData;
+                                 statTimerId = null;
+
+                                 var hostname = userData.getHostname();
+                                 var intf = userData.getInterface();
                                  
                                  var rpc =
                                      gertyreports.BackendConnection.
@@ -231,44 +204,57 @@ qx.Class.define
                                                      "</b> &nbsp;&nbsp; " +
                                                      "Port: <b>" + intf +
                                                      "</b>");
-   
+                                             
                                              var statsModel =
                                                  new qx.ui.table.model.Simple();
-
+                                             
                                              statsModel.setColumns(
                                                  result[0]);
-
+                                             
                                              result.shift();
                                              statsModel.addRows(result);
                                              
                                              statsTable.setTableModel(
                                                  statsModel);
+                                             
+                                             statusBar.setStatus(
+                                                 "Statistics available for " +
+                                                     statsModel.getRowCount() +
+                                                     " days");
                                          }
                                      },
                                      "get_line_summary", hostname, intf);
-                             }
-                         },
-                         0,
-                         null,
-                         this.getSelection().getItem(0),
-                         500);
-                     
+                             },
+                             0,
+                             null,
+                             selected,
+                             300);
+                     }
                  },
-                 portListController);
+                 searchListController);
              
              return page;
          },
 
 
-
+         // ******  Top N tab  ********
          
          initTopNTab : function()
          {
+             var statusBar = this;
+             
              var page = new qx.ui.tabview.Page(
                  "Top N", "icon/16/apps/office-chart.png");
              page.setLayout(new qx.ui.layout.Grow());
-
-
+             page.addListener(
+                 "appear",
+                 function(e)
+                 {
+                     statusBar.setStatus(
+                         "Select the criteria for Top-N display and " +
+                             "click the fire button");
+                 });
+             
              var rowsContainer =
                  new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
              page.add(rowsContainer);
@@ -320,7 +306,8 @@ qx.Class.define
              firstRow.add(critList);
 
 
-             var goButton = new qx.ui.form.Button("Go!");
+             var goButton = new qx.ui.form.Button(
+                 "go!", "qx/icon/Tango/22/actions/view-refresh.png");
              goButton.addListener(
                  "execute",
                  function() {

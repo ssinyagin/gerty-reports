@@ -80,7 +80,7 @@ sub is_mysql
 }
 
 
-sub search_host
+sub search_hosts
 {
     my $self = shift;
     my $pattern = shift;
@@ -109,6 +109,7 @@ sub search_host
         push(@{$ret}, $data->[0]);
     }
 
+    $sth->finish();
     $self->disconnect();
 
     $self->log->debug('RPC result: ' . scalar(@{$ret}) . ' items');

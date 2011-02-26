@@ -11,7 +11,8 @@ has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
 my %methods_allowed =
     (
-     'search_host' => 1,
+     'search_hosts' => 1,
+     'search_hosts_and_lines' => 1,
      'get_host_ports' => 1,
      'get_line_summary' => 1,
      
@@ -26,6 +27,54 @@ sub allow_rpc_access
 }
 
 
+
+sub search_hosts_and_lines
+{
+    my $self = shift;
+    my $pattern = shift;
+    my $limit = shift;
+
+    $limit = 50 unless defined($limit);
+    
+    $self->log->debug('RPC call: search_hosts_and_lines, ' .
+                      $pattern . ', ' . $limit);
+    
+    if( not $self->connect() )
+    {
+        return undef;
+    }
+
+    my $sth = $self->dbh->prepare
+        ('SELECT DISTINCT HOSTNAME, INTF_NAME ' .
+         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+         'WHERE HOSTNAME LIKE ? ' .
+         ' ORDER BY HOSTNAME, INTF_NAME');
+    
+    $sth->execute( $pattern );
+
+    my $ret = [];
+    while( scalar(@{$ret}) < $limit and
+           my $data = $sth->fetchrow_arrayref )
+    {
+        my($hostname, $intf) = @{$data};
+        
+        push(@{$ret},
+             {
+                 'label' => $hostname . ': ' . $intf,
+                 'hostname' => $hostname,
+                 'interface' => $intf,
+             });
+    }
+
+    $sth->finish();
+    $self->disconnect();
+
+    $self->log->debug('RPC result: ' . scalar(@{$ret}) . ' items');
+    return $ret;
+}
+
+
+    
 
 sub get_host_ports
 {
@@ -66,7 +115,8 @@ sub get_line_summary
     my $hostname = shift;
     my $intf = shift;
 
-    $self->log->debug('RPC call: get_line_summary, ' . $hostname);
+    $self->log->debug('RPC call: get_line_summary, ' .
+                      $hostname . ', ' . $intf);
 
     if( not $self->is_mysql() )
     {
@@ -94,7 +144,8 @@ sub get_line_summary
          ]);
 
     # daily error counters for last 14 days
-
+    my $days_available = 0;
+    
     foreach my $day (0..14)
     {
         my $result = $self->dbh->selectrow_hashref
@@ -106,7 +157,7 @@ sub get_line_summary
              ' SUM(LOSWS_COUNT) AS LOSWS, ' .
              ' SUM(UAS_COUNT) AS UAS, ' .
              ' TIME_TO_SEC(TIMEDIFF(MAX(MEASURE_TS), ' .
-             '   MIN(MEASURE_TS))) AS SECS ' .
+             '   MIN(MEASURE_TS))) + 900 AS SECS ' .
              'FROM HDSL_XTUC_15MIN_COUNTERS ' .
              'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
              'INTF_NAME=\'' . $intf . '\' AND ' .
@@ -121,16 +172,20 @@ sub get_line_summary
             push(@{$ret},
                  [
                   $result->{'DT'},
-                  ($result->{'CRCA'} * 60 / $result->{'SECS'}),
-                  ($result->{'ES'} * 100 / $result->{'SECS'}),
-                  ($result->{'SES'} * 100 / $result->{'SECS'}),
-                  ($result->{'LOSWS'} * 100 / $result->{'SECS'}),
-                  ($result->{'UAS'} * 100 / $result->{'SECS'})
+                  ($result->{'CRCA'} * 60.0 / $result->{'SECS'}),
+                  ($result->{'ES'} * 100.0 / $result->{'SECS'}),
+                  ($result->{'SES'} * 100.0 / $result->{'SECS'}),
+                  ($result->{'LOSWS'} * 100.0 / $result->{'SECS'}),
+                  ($result->{'UAS'} * 100.0 / $result->{'SECS'})
                  ]);
+            $days_available++;
         }
     }
 
     $self->disconnect();
+
+    $self->log->debug('Retrieved line statistics for ' .
+                      $days_available . ' days');
 
     return $ret;
 }
