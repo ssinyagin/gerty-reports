@@ -163,7 +163,7 @@ qx.Class.define
              
              
              // bind searchList with the statistics widget
-             // with 300ms delay
+             // with 150ms delay
 
              var statTimer = qx.util.TimerManager.getInstance();
              var statTimerId = null;
@@ -180,8 +180,9 @@ qx.Class.define
                      var selected = this.getSelection().getItem(0);
                      if( selected != null )
                      {
+                         statsTable.setVisibility("hidden");
                          statusBar.setStatus("Loading...");
-                     
+                         
                          statTimerId = statTimer.start(
                              function(userData)
                              {
@@ -216,6 +217,8 @@ qx.Class.define
                                              
                                              statsTable.setTableModel(
                                                  statsModel);
+                                             statsTable.setVisibility(
+                                                 "visible");
                                              
                                              statusBar.setStatus(
                                                  "Statistics available for " +
@@ -228,7 +231,7 @@ qx.Class.define
                              0,
                              null,
                              selected,
-                             300);
+                             150);
                      }
                  },
                  searchListController);
@@ -264,7 +267,9 @@ qx.Class.define
              var firstRow =
                  new qx.ui.container.Composite(firstRowLayout);
              rowsContainer.add(firstRow);
-             
+
+             var validator = new qx.ui.form.validation.Manager();
+
              firstRow.add(new qx.ui.basic.Label
                           ("Show top "));
              
@@ -272,6 +277,23 @@ qx.Class.define
              topNumField.setWidth(50);
              firstRow.add(topNumField);
 
+             validator.add(topNumField,
+                           function(value, item)
+                           {
+                               var valid =
+                                   value != null &&
+                                   value.length > 0 &&
+                                   value >= 5 &&
+                                   value <=50;
+                               if (!valid) {
+                                   item.setInvalidMessage(
+                                       "Please enter a " +
+                                           "number between 5 and 50");
+                               }
+                               return valid;
+                           });
+             
+             
              firstRow.add(new qx.ui.basic.Label("devices from"));
 
              var today = new Date();
@@ -308,13 +330,63 @@ qx.Class.define
 
              var goButton = new qx.ui.form.Button(
                  "go!", "qx/icon/Tango/22/actions/view-refresh.png");
+             firstRow.add(goButton);
+             
+             var statsTable = new qx.ui.table.Table();
+             statsTable.setWidth(640);
+             statsTable.setStatusBarVisible(false);
+             rowsContainer.add(statsTable, {flex : 1});
+
              goButton.addListener(
                  "execute",
                  function() {
+                     if( validator.validate() )
+                     {
+                         statsTable.setVisibility("hidden");
+                         statusBar.setStatus("Loading...");
+
+                         var critSelection = critList.getSelection();
+                         var criterion = critSelection[0].getModel().getData();
+
+                         var rpc =
+                             gertyreports.BackendConnection.
+                             getInstance();
+                         rpc.setServiceName('HDSL2_SHDSL_LINE_MIB');
+                         rpc.callAsyncSmart(
+                             function(result)
+                             {
+                                 if( result != null )
+                                 {
+                                     var statsModel =
+                                         new qx.ui.table.model.Simple();
+                                     
+                                     statsModel.setColumns(
+                                         result[0]);
+                                     
+                                     result.shift();
+                                     statsModel.addRows(result);
+                                     
+                                     statsTable.setTableModel(statsModel);
+                                     statsTable.setVisibility("visible");
+                                     
+                                     statusBar.setStatus(
+                                         "Statistics available for " +
+                                             statsModel.getRowCount() +
+                                             " lines");
+                                 }
+                             },
+                             "get_topn",
+                             topNumField.getValue(),
+                             dateFrom.getValue().toString(),
+                             dateTo.getValue().toString(),
+                             criterion);
+                     }
+                     else
+                     {
+                         statusBar.setStatus("Invalid parameters");
+                     }
                  }
              );
-
-             firstRow.add(goButton);
              
              return page;
          }

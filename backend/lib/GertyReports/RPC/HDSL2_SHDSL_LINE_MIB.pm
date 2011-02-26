@@ -15,7 +15,7 @@ my %methods_allowed =
      'search_hosts_and_lines' => 1,
      'get_host_ports' => 1,
      'get_line_summary' => 1,
-     
+     'get_topn' => 1,
     );
 
 sub allow_rpc_access
@@ -189,6 +189,57 @@ sub get_line_summary
 
     return $ret;
 }
+
+
+# Get Top N DSL lines by error counter
+
+sub get_topn
+{
+    my $self = shift;
+    my $topNum = shift;
+    my $dateFrom = shift;
+    my $dateTo = shift;
+    my $topColumn = shift;
+    
+    $self->log->debug('RPC call: get_topn, ' .
+                      join(', ', $topNum, $dateFrom, $dateTo, $topColumn));
+    
+    if( not $self->is_mysql() )
+    {
+        my $msg = 'Only MySQL is currently supported by get_topn()';
+        $self->log->fatal($msg);
+        die($msg);
+    }
+        
+    if( not $self->connect() )
+    {
+        return undef;
+    }
+
+    my $ret = [];
+    my $ports_available = 0;
+    
+    # column names
+    push(@{$ret},
+         [
+          'Debice',
+          'Port',
+          'CRC Err',
+          'ES',
+          'SES',
+          'LOSWS',
+          'UAS'
+         ]);
+
+
+    $self->disconnect();
+
+    $self->log->debug('Retrieved line statistics for ' .
+                      $ports_available . ' ports');
+
+    return $ret;
+}
+    
 
 
     
