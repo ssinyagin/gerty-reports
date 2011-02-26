@@ -60,8 +60,10 @@ qx.Class.define
              secondRow.add(portList, {row:3, column:0});
 
 
-             var statsLabel = new qx.ui.basic.Label();
-             secondRow.add(statsLabel, {row:0, column:1});
+             secondRow.add(
+                 new qx.ui.basic.Label(
+                     "Statistics for last 14 days:"),
+                 {row:0, column:1});
 
              var statsContainer =
                  new qx.ui.container.Composite(new qx.ui.layout.VBox(2));
@@ -203,7 +205,7 @@ qx.Class.define
                          statTimer.stop(statTimerId);
                      }
 
-                     statsLabel.setValue("Loading...");
+                     hostinfoLabel.setValue("Loading...");
                      
                      statTimerId = statTimer.start(
                          function(userData)
@@ -214,11 +216,6 @@ qx.Class.define
                                  var hostname = searchListController.
                                      getSelection().getItem(0);
                                  var intf = userData;
-
-                                 hostinfoLabel.setValue(
-                                     "Device: <b>" + hostname +
-                                         "</b>, Port: <b>" + intf +
-                                         "</b>");
                                  
                                  var rpc =
                                      gertyreports.BackendConnection.
@@ -229,8 +226,12 @@ qx.Class.define
                                      {
                                          if( result != null )
                                          {
-                                             statsLabel.setValue("Statistics:");
-
+                                             hostinfoLabel.setValue(
+                                                 "Device: <b>" + hostname +
+                                                     "</b> &nbsp;&nbsp; " +
+                                                     "Port: <b>" + intf +
+                                                     "</b>");
+   
                                              var statsModel =
                                                  new qx.ui.table.model.Simple();
 
@@ -254,17 +255,80 @@ qx.Class.define
                      
                  },
                  portListController);
-
-             
              
              return page;
          },
 
+
+
+         
          initTopNTab : function()
          {
              var page = new qx.ui.tabview.Page(
                  "Top N", "icon/16/apps/office-chart.png");
              page.setLayout(new qx.ui.layout.Grow());
+
+
+             var rowsContainer =
+                 new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
+             page.add(rowsContainer);
+
+             var firstRowLayout = new qx.ui.layout.HBox(8);
+             firstRowLayout.setAlignY("bottom");
+             var firstRow =
+                 new qx.ui.container.Composite(firstRowLayout);
+             rowsContainer.add(firstRow);
+             
+             firstRow.add(new qx.ui.basic.Label
+                          ("Show top "));
+             
+             var topNumField = new qx.ui.form.TextField("10");
+             topNumField.setWidth(50);
+             firstRow.add(topNumField);
+
+             firstRow.add(new qx.ui.basic.Label("devices from"));
+
+             var today = new Date();
+             var dateFrom = new qx.ui.form.DateField();
+             dateFrom.setValue(today);
+             firstRow.add(dateFrom);
+
+             firstRow.add(new qx.ui.basic.Label("to"));
+
+             var dateTo = new qx.ui.form.DateField();
+             dateTo.setValue(today);
+             firstRow.add(dateTo);
+
+             firstRow.add(new qx.ui.basic.Label("by"));
+
+             var critListData = [
+                 {label: "CRC Errors", data: "CRCA_COUNT"}, 
+                 {label: "Errored Seconds", data: "ES_COUNT"},
+                 {label: "Severely Errored Seconds", data: "SES_COUNT"},
+                 {label: "Loss of Sync Word Seconds", data: "LOSWS_COUNT"},
+                 {label: " Unavailable Seconds", data: "UAS_COUNT"}
+             ];
+             
+             var critModel =
+                 qx.data.marshal.Json.createModel(critListData);
+             
+             var critList = new qx.ui.form.SelectBox();
+             critList.setWidth(200);
+             var critListController =
+                 new qx.data.controller.List(critModel, critList, "label");
+             
+             firstRow.add(critList);
+
+
+             var goButton = new qx.ui.form.Button("Go!");
+             goButton.addListener(
+                 "execute",
+                 function() {
+                 }
+             );
+
+             firstRow.add(goButton);
+             
              return page;
          }
      }
