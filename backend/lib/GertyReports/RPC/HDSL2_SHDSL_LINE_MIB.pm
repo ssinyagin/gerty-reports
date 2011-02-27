@@ -8,6 +8,7 @@ has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
+# use YAML;
 
 my %methods_allowed =
     (
@@ -140,7 +141,8 @@ sub get_line_summary
           'ES',
           'SES',
           'LOSWS',
-          'UAS'
+          'UAS',
+          'Hours',
          ]);
 
     # daily error counters for last 14 days
@@ -151,13 +153,12 @@ sub get_line_summary
         my $result = $self->dbh->selectrow_hashref
             ('SELECT ' .
              ' DATE(MIN(MEASURE_TS)) AS DT, ' .
-             ' SUM(ES_COUNT) AS ES, ' .
-             ' SUM(SES_COUNT) AS SES, ' .
-             ' SUM(CRCA_COUNT) AS CRCA, ' .
-             ' SUM(LOSWS_COUNT) AS LOSWS, ' .
-             ' SUM(UAS_COUNT) AS UAS, ' .
-             ' TIME_TO_SEC(TIMEDIFF(MAX(MEASURE_TS), ' .
-             '   MIN(MEASURE_TS))) + 900 AS SECS ' .
+             ' MAX(ES_COUNT) AS ES, ' .
+             ' MAX(SES_COUNT) AS SES, ' .
+             ' MAX(CRCA_COUNT) AS CRCA, ' .
+             ' MAX(LOSWS_COUNT) AS LOSWS, ' .
+             ' MAX(UAS_COUNT) AS UAS, ' .
+             ' COUNT(DISTINCT MEASURE_TS) AS INTVLS ' .
              'FROM HDSL_XTUC_15MIN_COUNTERS ' .
              'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
              'INTF_NAME=\'' . $intf . '\' AND ' .
@@ -167,16 +168,17 @@ sub get_line_summary
              'MEASURE_TS < ' .
              '  DATE_SUB(CURRENT_DATE(), INTERVAL ' . ($day-1) . ' DAY) ');
 
-        if( defined($result->{'SECS'}) and $result->{'SECS'} > 0 )
+        if( defined($result->{'INTVLS'}) and $result->{'INTVLS'} > 0 )
         {
             push(@{$ret},
                  [
                   $result->{'DT'},
-                  ($result->{'CRCA'} * 60.0 / $result->{'SECS'}),
-                  ($result->{'ES'} * 100.0 / $result->{'SECS'}),
-                  ($result->{'SES'} * 100.0 / $result->{'SECS'}),
-                  ($result->{'LOSWS'} * 100.0 / $result->{'SECS'}),
-                  ($result->{'UAS'} * 100.0 / $result->{'SECS'})
+                  $result->{'CRCA'},
+                  $result->{'ES'},
+                  $result->{'SES'},
+                  $result->{'LOSWS'},
+                  $result->{'UAS'},
+                  $result->{'INTVLS'}/4,
                  ]);
             $days_available++;
         }
@@ -198,11 +200,11 @@ sub get_topn
     my $self = shift;
     my $topNum = shift;
     my $dateFrom = shift;
-    my $dateTo = shift;
+    my $days = shift;
     my $topColumn = shift;
     
     $self->log->debug('RPC call: get_topn, ' .
-                      join(', ', $topNum, $dateFrom, $dateTo, $topColumn));
+                      join(', ', $topNum, $dateFrom, $days, $topColumn));
     
     if( not $self->is_mysql() )
     {
@@ -217,26 +219,73 @@ sub get_topn
     }
 
     my $ret = [];
-    my $ports_available = 0;
     
     # column names
     push(@{$ret},
          [
-          'Debice',
+          'Device',
           'Port',
           'CRC Err',
           'ES',
           'SES',
           'LOSWS',
-          'UAS'
+          'UAS',
+          'Hours',
          ]);
 
+    # convert CRCA_COUNT => CRCA
+    $topColumn =~ s/_COUNT$//;
+    
+    my $sth = $self->dbh->prepare
+        ('SELECT ' .
+         ' HOSTNAME, ' .
+         ' INTF_NAME, ' .
+         ' MAX(ES_COUNT) AS ES, ' .
+         ' MAX(SES_COUNT) AS SES, ' .
+         ' MAX(CRCA_COUNT) AS CRCA, ' .
+         ' MAX(LOSWS_COUNT) AS LOSWS, ' .
+         ' MAX(UAS_COUNT) AS UAS, ' .
+         ' COUNT(DISTINCT MEASURE_TS) AS INTVLS ' .
+         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+         'WHERE ' . 
+         ' MEASURE_TS >= \'' . $dateFrom . '\' AND ' .
+         ' MEASURE_TS < DATE_ADD(\'' . $dateFrom . '\',' .
+         '       INTERVAL ' . $days . ' DAY) ' .
+         'GROUP BY HOSTNAME, INTF_NAME ' .
+         'ORDER BY ' . $topColumn . ' DESC ' .
+         'LIMIT ' . $topNum);
+    
+    
+    $sth->execute();
+    
+    my $ports_available = 0;
+    
+    while( my $result = $sth->fetchrow_hashref )
+    {
+        if( defined($result->{'INTVLS'}) and $result->{'INTVLS'} > 0 )
+        {
+            push(@{$ret},
+                 [
+                  $result->{'HOSTNAME'},
+                  $result->{'INTF_NAME'},
+                  $result->{'CRCA'},
+                  $result->{'ES'},
+                  $result->{'SES'},
+                  $result->{'LOSWS'},
+                  $result->{'UAS'},
+                  $result->{'INTVLS'}/4,
+                 ]);
+            $ports_available++;
+        }
+    }
 
     $self->disconnect();
 
     $self->log->debug('Retrieved line statistics for ' .
                       $ports_available . ' ports');
 
+    # print STDERR YAML::Dump($ret);
+    
     return $ret;
 }
     

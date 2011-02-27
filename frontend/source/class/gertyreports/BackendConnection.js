@@ -7,7 +7,7 @@ qx.Class.define('gertyreports.BackendConnection', {
     construct : function()
     {
         this.base(arguments);
-        this.setTimeout(3000);
+        this.setTimeout(120*1000);
         this.setUrl(qx.core.Setting.get("gertyreports.backend.url"));
     },
     

@@ -54,6 +54,7 @@ qx.Class.define
              var secondRow =
                  new qx.ui.container.Composite(secondRowGrid);
              secondRowGrid.setRowFlex(1,1);
+             secondRowGrid.setColumnFlex(1,1);
              rowsContainer.add(secondRow, {flex: 1});
              
 
@@ -81,18 +82,10 @@ qx.Class.define
 
              
              var statsTable = new qx.ui.table.Table();
-             statsTable.setWidth(640);
              statsTable.setStatusBarVisible(false);
              statsContainer.add(statsTable, {flex : 1});
 
-             var legendLabel = new qx.ui.basic.Label();
-             legendLabel.setRich(true);
-             legendLabel.setFont(new qx.bom.Font(9, [
-                 "Verdana", "Arial", "Sans Serif"]));
-             legendLabel.setValue(
-                 "CRC Errors: daily average count per minute<br>" +
-                     "ES, SES, LOSWS, UAS: daily average in percent of time");
-             statsContainer.add(legendLabel);
+             statsContainer.add(this.legendLabel());
 
              
              // ***  bindings between widgets ***
@@ -301,13 +294,18 @@ qx.Class.define
              dateFrom.setValue(today);
              firstRow.add(dateFrom);
 
-             firstRow.add(new qx.ui.basic.Label("to"));
+             firstRow.add(new qx.ui.basic.Label("for"));
+             
+             var daysData = [1,2,3,4,5,6,7];
+             var daysModel =
+                 qx.data.marshal.Json.createModel(daysData);                 
+             var daysList = new qx.ui.form.SelectBox();
+             daysList.setWidth(40);
+             var daysListController =
+                 new qx.data.controller.List(daysModel, daysList);
+             firstRow.add(daysList);
 
-             var dateTo = new qx.ui.form.DateField();
-             dateTo.setValue(today);
-             firstRow.add(dateTo);
-
-             firstRow.add(new qx.ui.basic.Label("by"));
+             firstRow.add(new qx.ui.basic.Label("days, sort by"));
 
              var critListData = [
                  {label: "CRC Errors", data: "CRCA_COUNT"}, 
@@ -333,10 +331,12 @@ qx.Class.define
              firstRow.add(goButton);
              
              var statsTable = new qx.ui.table.Table();
-             statsTable.setWidth(640);
              statsTable.setStatusBarVisible(false);
              rowsContainer.add(statsTable, {flex : 1});
+             
+             rowsContainer.add(this.legendLabel());
 
+             
              goButton.addListener(
                  "execute",
                  function() {
@@ -348,6 +348,12 @@ qx.Class.define
                          var critSelection = critList.getSelection();
                          var criterion = critSelection[0].getModel().getData();
 
+                         var daysSelection = daysList.getSelection();
+                         var days = daysSelection[0].getModel();
+                             
+                         var dateFormatter =
+                             new qx.util.format.DateFormat('YYYY-MM-dd');
+                         
                          var rpc =
                              gertyreports.BackendConnection.
                              getInstance();
@@ -377,8 +383,8 @@ qx.Class.define
                              },
                              "get_topn",
                              topNumField.getValue(),
-                             dateFrom.getValue().toString(),
-                             dateTo.getValue().toString(),
+                             dateFormatter.format(dateFrom.getValue()),
+                             days,
                              criterion);
                      }
                      else
@@ -389,6 +395,20 @@ qx.Class.define
              );
              
              return page;
+         },
+
+         legendLabel : function ()
+         {
+             var ret = new qx.ui.basic.Label();
+             ret.setRich(true);
+             ret.setFont(new qx.bom.Font(9, [
+                 "Verdana", "Arial", "Sans Serif"]));
+             ret.setValue(
+                 "CRC Errors: maximum count per 15-minute interval<br>" +
+                     "ES, SES, LOSWS, UAS: maximum seconds per " +
+                     "15-minute interval<br>" +
+                     "Hours: measurement time");
+             return ret;
          }
      }
  });

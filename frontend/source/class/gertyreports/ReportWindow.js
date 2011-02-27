@@ -10,7 +10,7 @@ qx.Class.define
 
          this.setLayout(new qx.ui.layout.Grow());
          this.setHeight(500);
-         this.setWidth(800);
+         this.setWidth(1000);
          this.setShowStatusbar(true);
          this.open();
          
