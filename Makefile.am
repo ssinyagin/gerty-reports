@@ -40,3 +40,6 @@ qx-source:
 
 qx-build:
 	cd frontend; $(MAKE) qx-build
+
+qx-lint:
+	cd frontend; $(MAKE) qx-lint

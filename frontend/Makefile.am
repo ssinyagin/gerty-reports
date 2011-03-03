@@ -63,6 +63,8 @@ qx-source: generate.py
 qx-build: generate.py
 	$(PYTHON) generate.py build
 
+qx-lint: generate.py
+	$(PYTHON) generate.py lint
 
 # Qooxdo ready-to-deploy application in build/ goes as-is into target
 # directory and into the distribution package
