@@ -1,7 +1,8 @@
 /*
 #asset(qx/icon/${qx.icontheme}/16/actions/system-search.png)
 #asset(qx/icon/${qx.icontheme}/16/apps/office-chart.png)
-#asset(qx/icon/Tango/22/actions/view-refresh.png)
+#asset(qx/icon/${qx.icontheme}/22/actions/view-refresh.png)
+#asset(qx/icon/${qx.icontheme}/16/apps/utilities-statistics.png)
 */
 
 qx.Class.define
@@ -65,21 +66,43 @@ qx.Class.define
              secondRow.add(hostList, {row:1, column:0});
 
 
-             secondRow.add(
-                 new qx.ui.basic.Label(
-                     "Line errors for the last 14 days:"),
-                 {row:0, column:1});
-
-             var statsContainer =
-                 new qx.ui.container.Composite(new qx.ui.layout.VBox(2));
-             secondRow.add(statsContainer, {row:1, column:1, rowSpan:3});
+             var statsLabelLayout = new qx.ui.layout.HBox(20);
+             statsLabelLayout.setAlignY("middle");
+             var statsLabelContainer =
+                 new qx.ui.container.Composite(statsLabelLayout);
+             secondRow.add(statsLabelContainer, {row:0, column:1});
 
 
+             var lineDetailsButton =
+                 new qx.ui.form.Button(
+                     null, "icon/16/apps/utilities-statistics.png");
+             lineDetailsButton.setToolTipText(
+                 "Open detailed line statistics in a new window");
+             lineDetailsButton.setEnabled(false);
+             lineDetailsButton.addListener(
+                 "execute",
+                 function()
+                 {
+                     this.openLineDetails(
+                         lineDetailsButton.getUserData('hostname'),
+                         lineDetailsButton.getUserData('intf'));
+                 },
+                 this);
+             statsLabelContainer.add(lineDetailsButton);
+             
              var hostinfoLabel = new qx.ui.basic.Label();
+             hostinfoLabel.setWidth(150);
              hostinfoLabel.setRich(true);
              hostinfoLabel.setSelectable(true);
-             statsContainer.add(hostinfoLabel);
+             statsLabelContainer.add(hostinfoLabel);
 
+
+             statsLabelContainer.add(
+                 new qx.ui.basic.Label("Line errors for last 2 weeks:"));
+             
+             var statsContainer =
+                 new qx.ui.container.Composite(new qx.ui.layout.VBox(2));
+             secondRow.add(statsContainer, {row:1, column:1});
              
              var statsTable = new qx.ui.table.Table();
              statsTable.setStatusBarVisible(false);
@@ -174,6 +197,10 @@ qx.Class.define
                      if( selected != null )
                      {
                          statsTable.setVisibility("hidden");
+                         statsTable.resetSelection();
+                         statsTable.resetCellFocus();
+                         hostinfoLabel.setValue("");
+                         lineDetailsButton.setEnabled(false);
                          statusBar.setStatus("Loading...");
                          
                          statTimerId = statTimer.start(
@@ -194,11 +221,16 @@ qx.Class.define
                                          if( result != null )
                                          {
                                              hostinfoLabel.setValue(
-                                                 "Device: <b>" + hostname +
-                                                     "</b> &nbsp;&nbsp; " +
-                                                     "Port: <b>" + intf +
+                                                 "<b>" + hostname +
+                                                     ", " + intf +
                                                      "</b>");
-                                             
+                                             lineDetailsButton.setUserData(
+                                                 'hostname', hostname);
+                                             lineDetailsButton.setUserData(
+                                                 'intf', intf);
+                                             lineDetailsButton.setEnabled(
+                                                 true);
+
                                              var statsModel =
                                                  new qx.ui.table.model.Simple();
                                              
@@ -227,7 +259,7 @@ qx.Class.define
                              150);
                      }
                  },
-                 searchListController);
+                 searchListController);            
              
              return page;
          },
@@ -263,8 +295,12 @@ qx.Class.define
 
              var validator = new qx.ui.form.validation.Manager();
 
+             var goButton = new qx.ui.form.Button(
+                 "Display", "icon/22/actions/view-refresh.png");
+             firstRow.add(goButton);
+
              firstRow.add(new qx.ui.basic.Label
-                          ("Show top "));
+                          ("top"));
              
              var topNumField = new qx.ui.form.TextField("10");
              topNumField.setWidth(50);
@@ -301,8 +337,7 @@ qx.Class.define
                  qx.data.marshal.Json.createModel(daysData);                 
              var daysList = new qx.ui.form.SelectBox();
              daysList.setWidth(40);
-             var daysListController =
-                 new qx.data.controller.List(daysModel, daysList);
+             new qx.data.controller.List(daysModel, daysList);
              firstRow.add(daysList);
 
              firstRow.add(new qx.ui.basic.Label("days, sort by"));
@@ -320,15 +355,30 @@ qx.Class.define
              
              var critList = new qx.ui.form.SelectBox();
              critList.setWidth(200);
-             var critListController =
-                 new qx.data.controller.List(critModel, critList, "label");
+             new qx.data.controller.List(critModel, critList, "label");
              
              firstRow.add(critList);
 
+             var spacer = new qx.ui.basic.Atom();
+             spacer.setWidth(200);
+             firstRow.add(spacer);
 
-             var goButton = new qx.ui.form.Button(
-                 "go!", "qx/icon/Tango/22/actions/view-refresh.png");
-             firstRow.add(goButton);
+             var lineDetailsButton =
+                 new qx.ui.form.Button(
+                     null, "icon/16/apps/utilities-statistics.png");
+             lineDetailsButton.setToolTipText(
+                 "Open detailed line statistics in a new window");
+             lineDetailsButton.setEnabled(false);
+             lineDetailsButton.addListener(
+                 "execute",
+                 function()
+                 {
+                     this.openLineDetails(
+                         lineDetailsButton.getUserData('hostname'),
+                         lineDetailsButton.getUserData('intf'));
+                 },
+                 this);
+             firstRow.add(lineDetailsButton);
              
              var statsTable = new qx.ui.table.Table();
              statsTable.setStatusBarVisible(false);
@@ -336,6 +386,7 @@ qx.Class.define
              
              rowsContainer.add(this.legendLabel());
 
+             // Event handler for the Go button
              
              goButton.addListener(
                  "execute",
@@ -343,6 +394,9 @@ qx.Class.define
                      if( validator.validate() )
                      {
                          statsTable.setVisibility("hidden");
+                         statsTable.resetSelection();
+                         statsTable.resetCellFocus();
+                         lineDetailsButton.setEnabled(false);
                          statusBar.setStatus("Loading...");
 
                          var critSelection = critList.getSelection();
@@ -393,6 +447,28 @@ qx.Class.define
                      }
                  }
              );
+
+             // Click on a table row -> enable the details button
+             statsTable.getSelectionModel().addListener(
+                 "changeSelection",
+                 function ()
+                 {
+                     var row = statsTable.getFocusedRow();
+                     if( row != null )
+                     {
+                         var model = statsTable.getTableModel();
+                         var hostname = model.getValue(0, row);
+                         var intf = model.getValue(1, row);
+                         lineDetailsButton.setUserData('hostname', hostname);
+                         lineDetailsButton.setUserData('intf', intf);
+                         lineDetailsButton.setEnabled(true);
+                     }
+                     else
+                     {
+                         lineDetailsButton.setEnabled(false);
+                     }
+                 },
+                 this);
              
              return page;
          },
@@ -409,6 +485,11 @@ qx.Class.define
                      "15-minute interval<br>" +
                      "Hours: measurement time");
              return ret;
+         },
+
+         openLineDetails: function (hostname, intf)
+         {
+             new gertyreports.HDSL2_SHDSL_LINE_MIB_line(hostname, intf);
          }
      }
  });

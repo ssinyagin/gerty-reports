@@ -48,7 +48,10 @@ sub search_hosts_and_lines
     my $sth = $self->dbh->prepare
         ('SELECT DISTINCT HOSTNAME, INTF_NAME ' .
          'FROM HDSL_XTUC_15MIN_COUNTERS ' .
-         'WHERE HOSTNAME LIKE ? ' .
+         'WHERE ' .
+         'MEASURE_TS >= ' .
+         '  DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY) AND ' .
+         'HOSTNAME LIKE ? ' .
          ' ORDER BY HOSTNAME, INTF_NAME');
     
     $sth->execute( $pattern );

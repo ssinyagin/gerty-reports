@@ -39,6 +39,7 @@ backenddir=@backenddir@
     -e "s,\@backendurl\@,@backendurl@,g" \
     -e "s,\@jsonrpcpath\@,@jsonrpcpath@,g" \
     -e "s,\@backendsitecfg\@,@backendsitecfg@,g" \
+    -e "s,\@abs_frontend_builddir\@,@abs_top_builddir@/frontend,g" \
     $1
 
 # Local Variables:

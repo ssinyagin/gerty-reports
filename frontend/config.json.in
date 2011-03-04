@@ -42,7 +42,7 @@
                           "${APPLICATION}.test.*",
                           "${APPLICATION}.simulation.*"],
         "LOCALES"      : [ "en" ],
-        "CACHE"        : "${TMPDIR}/cache",
+        "CACHE"        : "@abs_frontend_builddir@/cache",
         "ROOT"         : "."
     },
 
@@ -52,7 +52,17 @@
         {
             "include" :
             [
-                "gertyreports.HDSL2_SHDSL_LINE_MIB"
+                "gertyreports.*"
+            ]
+        },
+
+        "libraries" :
+        {
+            "library" :
+            [
+                {
+                    "manifest" : "contrib://QxJqPlot/trunk/Manifest.json" 
+                }
             ]
         }
     }
