@@ -8,7 +8,7 @@ has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
-# use YAML;
+use YAML;
 
 my %methods_allowed =
     (
@@ -17,6 +17,7 @@ my %methods_allowed =
      'get_host_ports' => 1,
      'get_line_summary' => 1,
      'get_topn' => 1,
+     'get_line_stats' => 1,
     );
 
 sub allow_rpc_access
@@ -292,6 +293,81 @@ sub get_topn
     return $ret;
 }
     
+
+# retrieve detailed statistics for plotting
+
+sub get_line_stats
+{
+    my $self = shift;
+    my $hostname = shift;
+    my $intf = shift;
+    my $dateFrom = shift;
+    my $days = shift;
+    
+
+    $self->log->debug
+        ('RPC call: get_line_stats, ' .
+         $hostname . ', ' . $intf . ', ' . $dateFrom . ', ' . $days);
+
+    
+    if( not $self->connect() )
+    {
+        return undef;
+    }
+
+    my $rowcount = 0;
+    my $seriesdata = [[],[],[],[],[]];
+    my $options = {
+        'series' =>
+            [
+             {'label' => 'CRC Err'},
+             {'label' => 'ES'},
+             {'label' => 'SES'},
+             {'label' => 'LOSWS'},
+             {'label' => 'UAS'},
+            ],
+    };
+    
+    my $sth = $self->dbh->prepare
+        ('SELECT ' .
+         ' MEASURE_TS, ' .
+         ' CRCA_COUNT, ' .
+         ' ES_COUNT, ' .
+         ' SES_COUNT, ' .
+         ' LOSWS_COUNT, ' .
+         ' UAS_COUNT ' .
+         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+         'WHERE ' .
+         ' HOSTNAME=\'' . $hostname . '\' AND ' .
+         ' INTF_NAME=\'' . $intf . '\' AND ' .
+         ' MEASURE_TS >= \'' . $dateFrom . '\' AND ' .
+         ' MEASURE_TS < DATE_ADD(\'' . $dateFrom . '\',' .
+         '       INTERVAL ' . $days . ' DAY) ');
+
+    $sth->execute();
+
+    while( (my @row = $sth->fetchrow_array()) )
+    {
+        $rowcount++;
+        my $timestamp = shift @row;
+        my $i = 0;
+        while( scalar(@row) )
+        {
+            my $data = shift @row;
+            push(@{$seriesdata->[$i]}, [$timestamp, $data]);
+            $i++;
+        }
+    }
+
+    $self->disconnect();
+
+    $self->log->debug('Retrieved line statistics');
+
+    print STDERR YAML::Dump($seriesdata);
+    
+    return [$rowcount, $seriesdata, $options];
+}
+
 
 
     

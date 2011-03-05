@@ -2,7 +2,7 @@
 #asset(qx/icon/${qx.icontheme}/16/actions/system-search.png)
 #asset(qx/icon/${qx.icontheme}/16/apps/office-chart.png)
 #asset(qx/icon/${qx.icontheme}/22/actions/view-refresh.png)
-#asset(qx/icon/${qx.icontheme}/16/apps/utilities-statistics.png)
+#asset(qx/icon/${qx.icontheme}/22/apps/utilities-statistics.png)
 */
 
 qx.Class.define
@@ -75,7 +75,7 @@ qx.Class.define
 
              var lineDetailsButton =
                  new qx.ui.form.Button(
-                     null, "icon/16/apps/utilities-statistics.png");
+                     null, "icon/22/apps/utilities-statistics.png");
              lineDetailsButton.setToolTipText(
                  "Open detailed line statistics in a new window");
              lineDetailsButton.setEnabled(false);
@@ -85,7 +85,8 @@ qx.Class.define
                  {
                      this.openLineDetails(
                          lineDetailsButton.getUserData('hostname'),
-                         lineDetailsButton.getUserData('intf'));
+                         lineDetailsButton.getUserData('intf'),
+                         null);
                  },
                  this);
              statsLabelContainer.add(lineDetailsButton);
@@ -280,7 +281,7 @@ qx.Class.define
                  {
                      statusBar.setStatus(
                          "Select the criteria for Top-N display and " +
-                             "click the fire button");
+                             "click the Refresh button");
                  });
              
              var rowsContainer =
@@ -295,12 +296,7 @@ qx.Class.define
 
              var validator = new qx.ui.form.validation.Manager();
 
-             var goButton = new qx.ui.form.Button(
-                 "Display", "icon/22/actions/view-refresh.png");
-             firstRow.add(goButton);
-
-             firstRow.add(new qx.ui.basic.Label
-                          ("top"));
+             firstRow.add(new qx.ui.basic.Label("Display top"));
              
              var topNumField = new qx.ui.form.TextField("10");
              topNumField.setWidth(50);
@@ -336,7 +332,7 @@ qx.Class.define
              var daysModel =
                  qx.data.marshal.Json.createModel(daysData);                 
              var daysList = new qx.ui.form.SelectBox();
-             daysList.setWidth(40);
+             daysList.setWidth(50);
              new qx.data.controller.List(daysModel, daysList);
              firstRow.add(daysList);
 
@@ -358,6 +354,10 @@ qx.Class.define
              new qx.data.controller.List(critModel, critList, "label");
              
              firstRow.add(critList);
+             
+             var goButton = new qx.ui.form.Button(
+                 null, "icon/22/actions/view-refresh.png");
+             firstRow.add(goButton);
 
              var spacer = new qx.ui.basic.Atom();
              spacer.setWidth(200);
@@ -365,7 +365,7 @@ qx.Class.define
 
              var lineDetailsButton =
                  new qx.ui.form.Button(
-                     null, "icon/16/apps/utilities-statistics.png");
+                     null, "icon/22/apps/utilities-statistics.png");
              lineDetailsButton.setToolTipText(
                  "Open detailed line statistics in a new window");
              lineDetailsButton.setEnabled(false);
@@ -373,9 +373,14 @@ qx.Class.define
                  "execute",
                  function()
                  {
+                     var daysSelection = daysList.getSelection();
+                     var days = daysSelection[0].getModel();
+                     
                      this.openLineDetails(
                          lineDetailsButton.getUserData('hostname'),
-                         lineDetailsButton.getUserData('intf'));
+                         lineDetailsButton.getUserData('intf'),
+                         dateFrom.getValue()
+                     );
                  },
                  this);
              firstRow.add(lineDetailsButton);
@@ -487,9 +492,10 @@ qx.Class.define
              return ret;
          },
 
-         openLineDetails: function (hostname, intf)
+         openLineDetails: function (hostname, intf, dateFrom)
          {
-             new gertyreports.HDSL2_SHDSL_LINE_MIB_line(hostname, intf);
+             new gertyreports.HDSL2_SHDSL_LINE_MIB_line(
+                 hostname, intf, dateFrom);
          }
      }
  });
