@@ -8,7 +8,7 @@ has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
-use YAML;
+# use YAML;
 
 my %methods_allowed =
     (
@@ -362,8 +362,6 @@ sub get_line_stats
     $self->disconnect();
 
     $self->log->debug('Retrieved line statistics');
-
-    print STDERR YAML::Dump($seriesdata);
     
     return [$rowcount, $seriesdata, $options];
 }
