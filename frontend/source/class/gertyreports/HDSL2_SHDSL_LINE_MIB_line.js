@@ -70,7 +70,7 @@ qx.Class.define
                  ['dragable','trendline']
              );
 
-             rowsContainer.add(plot);
+             rowsContainer.add(plot, {flex:1});
          }
 
      }

@@ -61,7 +61,7 @@
             "library" :
             [
                 {
-                    "manifest" : "contrib://QxJqPlot/trunk/Manifest.json" 
+                    "manifest" : "@QXJQPLOT_LOCATION@" 
                 }
             ]
         }

@@ -34,6 +34,7 @@ backenddir=@backenddir@
     -e "s,\@VERSION\@,@VERSION@,g" \
     -e "s,\@QOOXDOO_SDK\@,@QOOXDOO_SDK@,g" \
     -e "s,\@USE_QOOXDOO_SDK\@,@USE_QOOXDOO_SDK@,g" \
+    -e "s,\@QXJQPLOT_LOCATION\@,@QXJQPLOT_LOCATION@,g" \
     -e "s,\@frontenddir\@,@frontenddir@,g" \
     -e "s,\@backenddir\@,@backenddir@,g" \
     -e "s,\@backendurl\@,@backendurl@,g" \

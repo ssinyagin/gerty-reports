@@ -32,14 +32,14 @@ dist-hook:
 	cp DIST_REVISION $(distdir)/
 
 
-qx-source-all:
+qx-source-all: all
 	cd frontend; $(MAKE) qx-source-all
 
-qx-source:
+qx-source: all
 	cd frontend; $(MAKE) qx-source
 
-qx-build:
+qx-build: all
 	cd frontend; $(MAKE) qx-build
 
-qx-lint:
+qx-lint: all
 	cd frontend; $(MAKE) qx-lint
