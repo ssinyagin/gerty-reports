@@ -92,16 +92,17 @@ AC_SUBST(QOOXDOO_SDK, [${with_qooxdoo_sdk}])
 AC_SUBST(USE_QOOXDOO_SDK, [${use_qooxdoo_sdk}])
 
 
-AC_ARG_WITH(qxjqplot,
-   [AC_HELP_STRING(--with-qxjqplot=DIR, location of QxJqPlot Manifest.json)])
+AC_ARG_WITH(qxdygraphs,
+   [AC_HELP_STRING(--with-qxdygraphs=DIR,
+      location of QxDyGraphs Manifest.json)])
 
-if test x"${with_qxjqplot}" != x; then
-  qxjqplot_location="${with_qxjqplot}"
+if test x"${with_qxdygraphs}" != x; then
+  qxdygraphs_location="${with_qxdygraphs}"
 else
-  qxjqplot_location="contrib://QxJqPlot/trunk/Manifest.json"
+  qxdygraphs_location="contrib://QxDyGraphs/trunk/Manifest.json"
 fi
 
-AC_SUBST(QXJQPLOT_LOCATION, [${qxjqplot_location}])
+AC_SUBST(QXDYGRAPHS_LOCATION, [${qxdygraphs_location}])
 
 
 AC_ARG_VAR(frontenddir, [[PREFIX/frontend] Frontend directory])

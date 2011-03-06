@@ -52,7 +52,7 @@
         {
             "include" :
             [
-                "gertyreports.*"
+                "gertyreports.r.*"
             ]
         },
 
@@ -61,7 +61,7 @@
             "library" :
             [
                 {
-                    "manifest" : "@QXJQPLOT_LOCATION@" 
+                    "manifest" : "@QXDYGRAPHS_LOCATION@" 
                 }
             ]
         }

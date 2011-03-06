@@ -1,12 +1,11 @@
 /*
 #asset(qx/icon/${qx.icontheme}/16/actions/system-search.png)
 #asset(qx/icon/${qx.icontheme}/16/apps/office-chart.png)
-#asset(qx/icon/${qx.icontheme}/22/actions/view-refresh.png)
 #asset(qx/icon/${qx.icontheme}/22/apps/utilities-statistics.png)
 */
 
 qx.Class.define
-("gertyreports.HDSL2_SHDSL_LINE_MIB",
+("gertyreports.r.HDSL2_SHDSL_LINE_MIB",
  {
      extend : gertyreports.ReportWindow,
 
@@ -271,6 +270,7 @@ qx.Class.define
          initTopNTab : function()
          {
              var statusBar = this;
+             var reportWindow = this;
              
              var page = new qx.ui.tabview.Page(
                  "Top N", "icon/16/apps/office-chart.png");
@@ -280,8 +280,7 @@ qx.Class.define
                  function(e)
                  {
                      statusBar.setStatus(
-                         "Select the criteria for Top-N display and " +
-                             "click the Refresh button");
+                         "Select the criteria for Top-N display");
                  });
              
              var rowsContainer =
@@ -355,10 +354,6 @@ qx.Class.define
              
              firstRow.add(critList);
              
-             var goButton = new qx.ui.form.Button(
-                 null, "icon/22/actions/view-refresh.png");
-             firstRow.add(goButton);
-
              var spacer = new qx.ui.basic.Atom();
              spacer.setWidth(200);
              firstRow.add(spacer);
@@ -391,67 +386,74 @@ qx.Class.define
              
              rowsContainer.add(this.legendLabel());
 
-             // Event handler for the Go button
-             
-             goButton.addListener(
-                 "execute",
-                 function() {
-                     if( validator.validate() )
-                     {
-                         statsTable.setVisibility("hidden");
-                         statsTable.resetSelection();
-                         statsTable.resetCellFocus();
-                         lineDetailsButton.setEnabled(false);
-                         statusBar.setStatus("Loading...");
+             // Event handler for selection changes
 
-                         var critSelection = critList.getSelection();
-                         var criterion = critSelection[0].getModel().getData();
-
-                         var daysSelection = daysList.getSelection();
-                         var days = daysSelection[0].getModel();
-                             
-                         var dateFormatter =
-                             new qx.util.format.DateFormat('YYYY-MM-dd');
-                         
-                         var rpc =
-                             gertyreports.BackendConnection.
-                             getInstance();
-                         rpc.setServiceName('HDSL2_SHDSL_LINE_MIB');
-                         rpc.callAsyncSmart(
-                             function(result)
+             var refreshTable = function() {
+                 if( validator.validate() )
+                 {
+                     statsTable.setVisibility("hidden");
+                     statsTable.resetSelection();
+                     statsTable.resetCellFocus();
+                     lineDetailsButton.setEnabled(false);
+                     statusBar.setStatus("Loading...");
+                     
+                     var critSelection = critList.getSelection();
+                     var criterion = critSelection[0].getModel().getData();
+                     
+                     var daysSelection = daysList.getSelection();
+                     var days = daysSelection[0].getModel();
+                     
+                     var dateFormatter =
+                         new qx.util.format.DateFormat('YYYY-MM-dd');
+                     
+                     var rpc =
+                         gertyreports.BackendConnection.
+                         getInstance();
+                     rpc.setServiceName('HDSL2_SHDSL_LINE_MIB');
+                     rpc.callAsyncSmart(
+                         function(result)
+                         {
+                             if( result != null )
                              {
-                                 if( result != null )
-                                 {
-                                     var statsModel =
-                                         new qx.ui.table.model.Simple();
-                                     
-                                     statsModel.setColumns(
-                                         result[0]);
-                                     
-                                     result.shift();
-                                     statsModel.addRows(result);
-                                     
-                                     statsTable.setTableModel(statsModel);
-                                     statsTable.setVisibility("visible");
-                                     
-                                     statusBar.setStatus(
-                                         "Statistics available for " +
-                                             statsModel.getRowCount() +
-                                             " lines");
-                                 }
-                             },
-                             "get_topn",
-                             topNumField.getValue(),
-                             dateFormatter.format(dateFrom.getValue()),
-                             days,
-                             criterion);
-                     }
-                     else
-                     {
-                         statusBar.setStatus("Invalid parameters");
-                     }
+                                 var statsModel =
+                                     new qx.ui.table.model.Simple();
+                                 
+                                 statsModel.setColumns(
+                                     result[0]);
+                                 
+                                 result.shift();
+                                 statsModel.addRows(result);
+                                 
+                                 statsTable.setTableModel(statsModel);
+                                 statsTable.setVisibility("visible");
+                                 
+                                 statusBar.setStatus(
+                                     "Statistics available for " +
+                                         statsModel.getRowCount() +
+                                         " lines");
+                             }
+                         },
+                         "get_topn",
+                         topNumField.getValue(),
+                         dateFormatter.format(dateFrom.getValue()),
+                         days,
+                         criterion);
                  }
-             );
+                 else
+                 {
+                     statusBar.setStatus("Invalid parameters");
+                 }
+             };             
+
+             // refresh the table after selection change
+             
+             topNumField.addListener("changeValue", refreshTable);
+             dateFrom.addListener("changeValue", refreshTable);
+             daysList.addListener("changeSelection",refreshTable);
+             critList.addListener("changeSelection",refreshTable);
+             
+             // retrieve data immediately after window opening
+             refreshTable();
 
              // Click on a table row -> enable the details button
              statsTable.getSelectionModel().addListener(
@@ -494,7 +496,7 @@ qx.Class.define
 
          openLineDetails: function (hostname, intf, dateFrom)
          {
-             new gertyreports.HDSL2_SHDSL_LINE_MIB_line(
+             new gertyreports.r.HDSL2_SHDSL_LINE_MIB_line(
                  hostname, intf, dateFrom);
          }
      }

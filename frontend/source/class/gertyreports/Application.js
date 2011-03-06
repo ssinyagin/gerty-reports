@@ -23,6 +23,11 @@ qx.Class.define
              var root = this.getRoot();
              gertyreports.ReportWindow.desktop = root;
              this.addMenuBar(root);
+
+             /* for quick testing 
+             new gertyreports.r.HDSL2_SHDSL_LINE_MIB_line(
+                 'do-dm-01', 'MLP-1-1', new Date('2011-03-01'));
+             */
          },
 
          // Top-level toolbar         
@@ -57,7 +62,7 @@ qx.Class.define
                              function()
                              {
                                  var klassName =
-                                     "gertyreports." +
+                                     "gertyreports.r." +
                                      this.getUserData("report-class");
                                  
                                  this.debug("Launching report window: " +

@@ -17,7 +17,7 @@ my %methods_allowed =
      'get_host_ports' => 1,
      'get_line_summary' => 1,
      'get_topn' => 1,
-     'get_line_stats' => 1,
+     'get_line_timeseries' => 1,
     );
 
 sub allow_rpc_access
@@ -296,7 +296,7 @@ sub get_topn
 
 # retrieve detailed statistics for plotting
 
-sub get_line_stats
+sub get_line_timeseries
 {
     my $self = shift;
     my $hostname = shift;
@@ -304,9 +304,15 @@ sub get_line_stats
     my $dateFrom = shift;
     my $days = shift;
     
+    if( not $self->is_mysql() )
+    {
+        my $msg = 'Only MySQL is currently supported by get_line_timeseries()';
+        $self->log->fatal($msg);
+        die($msg);
+    }
 
     $self->log->debug
-        ('RPC call: get_line_stats, ' .
+        ('RPC call: get_line_timeseries, ' .
          $hostname . ', ' . $intf . ', ' . $dateFrom . ', ' . $days);
 
     
@@ -316,21 +322,14 @@ sub get_line_stats
     }
 
     my $rowcount = 0;
-    my $seriesdata = [[],[],[],[],[]];
+    my $seriesdata = [];
     my $options = {
-        'series' =>
-            [
-             {'label' => 'CRC Err'},
-             {'label' => 'ES'},
-             {'label' => 'SES'},
-             {'label' => 'LOSWS'},
-             {'label' => 'UAS'},
-            ],
+        'labels' => ['Date', 'CRC Err', 'ES', 'SES', 'LOSWS', 'UAS'],
     };
     
     my $sth = $self->dbh->prepare
         ('SELECT ' .
-         ' MEASURE_TS, ' .
+         ' UNIX_TIMESTAMP(MEASURE_TS)*1000, ' .
          ' CRCA_COUNT, ' .
          ' ES_COUNT, ' .
          ' SES_COUNT, ' .
@@ -349,14 +348,7 @@ sub get_line_stats
     while( (my @row = $sth->fetchrow_array()) )
     {
         $rowcount++;
-        my $timestamp = shift @row;
-        my $i = 0;
-        while( scalar(@row) )
-        {
-            my $data = shift @row;
-            push(@{$seriesdata->[$i]}, [$timestamp, $data]);
-            $i++;
-        }
+        push(@{$seriesdata}, [@row]);
     }
 
     $self->disconnect();
