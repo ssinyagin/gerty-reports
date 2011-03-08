@@ -95,10 +95,13 @@ qx.Class.define
                          {
                              var opts = result[2];
                              var series = result[1];
+                             // convert UNIX timestamps to dates
                              for(var i=0; i<series.length; i++)
                              {
-                                 series[i][0] = new Date(Number(series[i][0]));
+                                 series[i][0] =
+                                     new Date(series[i][0] * 1000);
                              }
+                             
                              var plot = new qxdygraphs.Plot(series,opts);
                              plotContainer.add(plot);
                              statusBar.setStatus(

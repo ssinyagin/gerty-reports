@@ -11,8 +11,12 @@ qx.Class.define
 
      members :
      {
+         topNFirstTime: null,
+         
          initContent : function()
          {
+             this.topNFirstTime = true;
+             
              var tabView = new qx.ui.tabview.TabView();
 
              tabView.add(this.initSeachTab());
@@ -275,13 +279,6 @@ qx.Class.define
              var page = new qx.ui.tabview.Page(
                  "Top N", "icon/16/apps/office-chart.png");
              page.setLayout(new qx.ui.layout.Grow());
-             page.addListener(
-                 "appear",
-                 function(e)
-                 {
-                     statusBar.setStatus(
-                         "Select the criteria for Top-N display");
-                 });
              
              var rowsContainer =
                  new qx.ui.container.Composite(new qx.ui.layout.VBox(10));
@@ -430,7 +427,9 @@ qx.Class.define
                                  statusBar.setStatus(
                                      "Statistics available for " +
                                          statsModel.getRowCount() +
-                                         " lines");
+                                         " lines. Select the new criteria " +
+                                         "or choose a device and see the " +
+                                         "graphs");
                              }
                          },
                          "get_topn",
@@ -452,9 +451,6 @@ qx.Class.define
              daysList.addListener("changeSelection",refreshTable);
              critList.addListener("changeSelection",refreshTable);
              
-             // retrieve data immediately after window opening
-             refreshTable();
-
              // Click on a table row -> enable the details button
              statsTable.getSelectionModel().addListener(
                  "changeSelection",
@@ -476,7 +472,24 @@ qx.Class.define
                      }
                  },
                  this);
-             
+
+             page.addListener(
+                 "appear",
+                 function(e)
+                 {
+                     if( reportWindow.topNFirstTime )
+                     {
+                         // retrieve data immediately after window opening
+                         refreshTable();
+                         reportWindow.topNFirstTime = false;
+                     }
+                     else
+                     {
+                         statusBar.setStatus(
+                             "Select the criteria for Top-N display");
+                     }
+                 });
+
              return page;
          },
 

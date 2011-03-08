@@ -329,7 +329,7 @@ sub get_line_timeseries
     
     my $sth = $self->dbh->prepare
         ('SELECT ' .
-         ' UNIX_TIMESTAMP(MEASURE_TS)*1000, ' .
+         ' UNIX_TIMESTAMP(MEASURE_TS), ' .
          ' CRCA_COUNT, ' .
          ' ES_COUNT, ' .
          ' SES_COUNT, ' .
@@ -348,7 +348,9 @@ sub get_line_timeseries
     while( (my @row = $sth->fetchrow_array()) )
     {
         $rowcount++;
-        push(@{$seriesdata}, [@row]);
+        # convert from strings to numbers
+        my @numbers = map {int($_)} @row;
+        push(@{$seriesdata}, [@numbers]);
     }
 
     $self->disconnect();
