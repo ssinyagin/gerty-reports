@@ -1,5 +1,6 @@
 /*
-  #asset(dygraphs/*)
+#asset(dygraphs/*)
+#asset(qx/icon/${qx.icontheme}/22/apps/office-spreadsheet.png)
 */
 
 qx.Class.define
@@ -26,6 +27,9 @@ qx.Class.define
          {
              var statusBar = this;
              var reportWindow = this;
+             
+             var dateFormatter =
+                 new qx.util.format.DateFormat('YYYY-MM-dd');
              
              statusBar.setStatus(
                  "Select the time range and press the Refresh button");
@@ -67,9 +71,7 @@ qx.Class.define
              
              controlsContainer.add(new qx.ui.basic.Label("days."));
 
-             var spacer = new qx.ui.basic.Atom();
-             spacer.setWidth(20);
-             controlsContainer.add(spacer);
+             controlsContainer.add(new qx.ui.core.Spacer(20));
              controlsContainer.add(new qx.ui.basic.Label("Output as:"));
              
              var outputTypeGroup =
@@ -81,6 +83,32 @@ qx.Class.define
              outputTypeGroup.setSelection([outputTypeButton1]);
              controlsContainer.add(outputTypeGroup);
              
+             controlsContainer.add(new qx.ui.core.Spacer(250, 0));
+
+             var xlsButton =
+                 new qx.ui.form.Button(
+                     null, "icon/22/apps/office-spreadsheet.png");
+             xlsButton.setToolTipText("Export data as Excel file");
+             controlsContainer.add(xlsButton);
+
+             // the button retrieves the Excel file from the backend.
+             xlsButton.addListener(
+                 "execute",
+                 function(e)
+                 {
+                     var daysSelection = daysList.getSelection();
+                     var days = daysSelection[0].getModel();
+                     var selectedDate =
+                         dateFormatter.format(dateFrom.getValue());
+                     
+                     window.location.href =
+                         qx.core.Setting.get("gertyreports.export.url") +
+                         '/xls/HDSL2_SHDSL_LINE_MIB/get_line_timeseries' +
+                         '?hostname=' + reportWindow.hostname +
+                         '&intf=' + reportWindow.intf +
+                         '&dateFrom=' + selectedDate +
+                         '&days=' + days;
+                 });
              
              var plotContainer =
                  new qx.ui.container.Composite(new qx.ui.layout.Grow());
@@ -94,10 +122,7 @@ qx.Class.define
                  
                  var daysSelection = daysList.getSelection();
                  var days = daysSelection[0].getModel();
-                 
-                 var dateFormatter =
-                     new qx.util.format.DateFormat('YYYY-MM-dd');
-                 
+                                  
                  var rpc =
                      gertyreports.BackendConnection.
                      getInstance();
@@ -105,11 +130,11 @@ qx.Class.define
                  rpc.callAsyncSmart(
                      function(result)
                      {
-                         // result = [rowcount, data, options]
-                         if( result[0] > 0 )
+                         if( result.data.length > 0 )
                          {
-                             var opts = result[2];
-                             var series = result[1];
+                             var opts = {labels: result.labels};
+                             var series = result.data;
+                             
                              // convert UNIX timestamps to dates
                              for(var i=0; i<series.length; i++)
                              {
@@ -143,7 +168,8 @@ qx.Class.define
                                  plotContainer.add(table);
                              }
                              statusBar.setStatus(
-                                 "Retrieved " + result[0] + " data points");
+                                 "Retrieved " + result.data.length +
+                                     " data points");
                          }
                          else
                          {

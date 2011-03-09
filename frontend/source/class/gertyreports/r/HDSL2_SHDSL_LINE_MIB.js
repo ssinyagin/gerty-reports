@@ -229,10 +229,8 @@ qx.Class.define
                                                  new qx.ui.table.model.Simple();
                                              
                                              statsModel.setColumns(
-                                                 result[0]);
-                                             
-                                             result.shift();
-                                             statsModel.addRows(result);
+                                                 result.labels);
+                                             statsModel.addRows(result.data);
                                              
                                              statsTable.setTableModel(
                                                  statsModel);
@@ -365,9 +363,7 @@ qx.Class.define
              
              firstRow.add(critList);
              
-             var spacer = new qx.ui.basic.Atom();
-             spacer.setWidth(200);
-             firstRow.add(spacer);
+             firstRow.add(new qx.ui.core.Spacer(200));
 
              var lineDetailsButton =
                  new qx.ui.form.Button(
@@ -429,11 +425,8 @@ qx.Class.define
                                  var statsModel =
                                      new qx.ui.table.model.Simple();
                                  
-                                 statsModel.setColumns(
-                                     result[0]);
-                                 
-                                 result.shift();
-                                 statsModel.addRows(result);
+                                 statsModel.setColumns(result.labels);
+                                 statsModel.addRows(result.data);
                                  
                                  statsTable.setTableModel(statsModel);
                                  statsTable.setVisibility("visible");

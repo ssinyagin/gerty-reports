@@ -24,9 +24,9 @@ qx.Class.define
              gertyreports.ReportWindow.desktop = root;
              this.addMenuBar(root);
 
-             /* for quick testing 
+             /* for quick testing
              new gertyreports.r.HDSL2_SHDSL_LINE_MIB_line(
-                 'do-dm-01', 'MLP-1-1', new Date('2011-03-01'));
+                 'do-dm-01', 'MLP-1-1', new Date(1298934000*1000));
              */
          },
 

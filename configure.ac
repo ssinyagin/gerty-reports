@@ -54,7 +54,8 @@ AC_SUBST(perllibdirs, [${perllibdirs}])
 if test "$enable_pkgonly" != yes; then
 
    for module in \
-       'DBI' 'Mojolicious' 'MojoX::Dispatcher::Qooxdoo::Jsonrpc' 
+       'DBI' 'Mojolicious' 'MojoX::Dispatcher::Qooxdoo::Jsonrpc' \
+       'Spreadsheet::WriteExcel' 'Date::Manip'
    do
      AC_MSG_CHECKING([presence of $module])
      if ${PERL} ${PERLOPTS} -e 'use '$module 2>/dev/null; then
@@ -121,6 +122,11 @@ AC_ARG_VAR(jsonrpcpath,
 [[jsonrpc] JSON-RPC service path, appended to BACKENDURL])
 if test -z "$jsonrpcpath"; then
    jsonrpcpath='jsonrpc'; fi
+
+AC_ARG_VAR(exportpath,
+[[export] Export service path, appended to BACKENDURL])
+if test -z "$exportpath"; then
+   exportpath='export'; fi
 
 AC_ARG_VAR(backendsitecfg,
 [[BACKENDDIR/gerty_reports_siteconfig.json] Site-cpecific configuration file])

@@ -54,49 +54,63 @@ sub startup
         }
     }
 
-    # RPC services
     
-    my $services = {
-        'Common' => new GertyReports::RPC::Common('enabled_reports' =>
-                                                  $enabled_reports)            
-    };
-
+    # RPC and Export services
+    
+    my $rpcsrv = {};
+    my $expsrv = {};
+    my $report_list = {};
+    
+    # Load report handlers
+    
     while( my ($report, $attrs) = each%{$enabled_reports} )
     {
-        my $module = 'GertyReports::RPC::' . $report;
-        $self->log->debug('Loading report module: ' . $module);
+        my $backend = $self->load_module
+            ('GertyReports::Backend::' . $report, %{$attrs});
 
-        eval 'require ' . $module;
-        if( $@ )
-        {
-            $self->log->error
-                ('Failed to load ' . $module . ': ' . $@);
-        }
-        
-        my $handle = eval 'new ' . $module . '(%{$attrs})';
-        if( $@ )
-        {
-            $self->log->error
-                ('Failed to initialize ' . $module . ': ' . $@);
-        }
-        else
-        {
-            $services->{$report} = $handle;
-            $attrs->{'report_name'} = $handle->report_name();
-            $attrs->{'report_description'} = $handle->report_description();
-        }
+        next unless defined($backend);
+
+        my $rpc_handle = $self->load_module
+            ('GertyReports::RPC::' . $report, 'backend' => $backend);
+        next unless defined($rpc_handle);
+
+        my $exp_handle = $self->load_module
+            ('GertyReports::Export::' . $report, 'backend' => $backend);
+        next unless defined($exp_handle);
+
+        $rpcsrv->{$report} = $rpc_handle;
+        $expsrv->{$report} = $exp_handle;
+        $report_list->{$report} = {
+            'report_name' => $backend->report_name(),
+            'report_description' => $backend->report_description(),
+        };
     }
-    
-    my $r = $self->routes;
 
+    # Common service which lists the available reports
+    
+    $rpcsrv->{'Common'} = new GertyReports::RPC::Common
+        ('enabled_reports' => $report_list);
+    
+
+    # new binary type
+    $self->types->type(excel => 'application/vnd.ms-excel');
+
+    # HTTP dispatch routing
+    my $r = $self->routes;
             
     $r->route('/' . $config->{'jsonrpcpath'})->to(
         class => 'Jsonrpc',
         method => 'dispatch',
         namespace => 'MojoX::Dispatcher::Qooxdoo',
-        # our own properties
-        services => $services,
+        services => $rpcsrv,
         debug => 0,
+        );
+
+    $r->route('/' . $config->{'exportpath'} . '/xls/:report/:call')->to(
+        class => 'ExportExcel',
+        method => 'dispatch',
+        namespace => 'GertyReports',
+        report_handlers => $expsrv,
         );
 }
 
@@ -140,7 +154,43 @@ sub secret
 }
 
 
+sub load_module
+{
+    my $self = shift;
+    my $module = shift;
+    my @args = @_;
+
+    $self->log->debug('Loading report module: ' . $module);
+            
+    eval 'require ' . $module;
+    if( $@ )
+    {
+        $self->log->error('Failed to load ' . $module . ': ' . $@);
+        return undef;
+    }
+    
+    my $handle = eval 'new ' . $module . '(@args)';
+    if( $@ )
+    {
+        $self->log->error('Failed to initialize ' . $module . ': ' . $@);
+        return undef;
+    }
+    
+    if( not defined($handle) )
+    { 
+        $self->log->error($module . '->new() returned undef');
+        return undef;
+    }
+    
+    return $handle;
+}
+
+
         
+    
+    
+
+
         
 
 

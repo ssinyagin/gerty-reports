@@ -7,6 +7,7 @@
   // Site-specific settings
   qxsettings = {};
   qxsettings["gertyreports.backend.url"] = "@backendurl@/@jsonrpcpath@";
+  qxsettings["gertyreports.export.url"] = "@backendurl@/@exportpath@";
   </script>
   <script type="text/javascript" src="script/gertyreports.js"></script>
 </head>

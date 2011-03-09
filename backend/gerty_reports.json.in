@@ -1,4 +1,5 @@
 {
     "jsonrpcpath"      : "@jsonrpcpath@",
+    "exportpath"      : "@exportpath@",
     "backendsitecfg"   : "@backendsitecfg@"    
 }

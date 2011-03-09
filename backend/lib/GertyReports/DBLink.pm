@@ -51,10 +51,8 @@ sub connect
     
     if( not defined( $dbh ) )
     {
-        $self->log->error
-            ('DBLink failed to connect to the database "'.
-             $self->dsn . '". Error message: ' . $dbh->errstr);
-        return undef;
+        die('DBLink failed to connect to the database "'.
+            $self->dsn . '". Error message: ' . $DBI::errstr);
     }
 
     $self->dbh($dbh);
@@ -85,15 +83,8 @@ sub search_hosts
     my $self = shift;
     my $pattern = shift;
     my $limit = shift;
-
-    $limit = 50 unless defined($limit);
-
-    $self->log->debug('RPC call: search_host, ' . $pattern . ', ' . $limit);
     
-    if( not $self->connect() )
-    {
-        return undef;
-    }
+    $self->connect();
 
     my $sth = $self->dbh->prepare
         ('SELECT DISTINCT ' . $self->hostname_column . ' ' . 
@@ -112,7 +103,6 @@ sub search_hosts
     $sth->finish();
     $self->disconnect();
 
-    $self->log->debug('RPC result: ' . scalar(@{$ret}) . ' items');
     return $ret;
 }
 
