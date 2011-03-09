@@ -82,16 +82,6 @@ qx.Class.define
              lineDetailsButton.setToolTipText(
                  "Open detailed line statistics in a new window");
              lineDetailsButton.setEnabled(false);
-             lineDetailsButton.addListener(
-                 "execute",
-                 function()
-                 {
-                     this.openLineDetails(
-                         lineDetailsButton.getUserData('hostname'),
-                         lineDetailsButton.getUserData('intf'),
-                         null);
-                 },
-                 this);
              statsLabelContainer.add(lineDetailsButton);
              
              var hostinfoLabel = new qx.ui.basic.Label();
@@ -264,6 +254,30 @@ qx.Class.define
                      }
                  },
                  searchListController);            
+
+             // Lite details pick up the date from statsTable
+             lineDetailsButton.addListener(
+                 "execute",
+                 function()
+                 {
+                     var detailsDate = new Date();
+                     var model = statsTable.getTableModel();
+                     var selModel = statsTable.getSelectionModel();
+                     if( !selModel.isSelectionEmpty() )
+                     {
+                         var row = selModel.getAnchorSelectionIndex();
+                         var dateString = model.getValue(0, row);
+                         var dateFormatter =
+                             new qx.util.format.DateFormat('YYYY-MM-dd');
+                         detailsDate = dateFormatter.parse(dateString);
+                     }
+                     this.openLineDetails(
+                         lineDetailsButton.getUserData('hostname'),
+                         lineDetailsButton.getUserData('intf'),
+                         detailsDate);
+                 },
+                 this);
+
              
              return page;
          },
