@@ -77,7 +77,7 @@ sub startup
     while( my ($report, $attrs) = each%{$enabled_reports} )
     {
         my $backend = $self->load_module
-            ('GertyReports::Backend::' . $report, %{$attrs});
+            ('GertyReports::Backend::' . $report, %{$attrs}, app => $self);
 
         next unless defined($backend);
 
