@@ -6,8 +6,9 @@
     ],
     
     "HDSL2_SHDSL_LINE_MIB.enabled" : 1,
-    "HDSL2_SHDSL_LINE_MIB.dsn" : "DBI:mysql:database=gerty;host=localhost",
-    "HDSL2_SHDSL_LINE_MIB.username" : "gerty_ro",
-    "HDSL2_SHDSL_LINE_MIB.password" : "gerty_ro",
-    "HDSL2_SHDSL_LINE_MIB.history_days" : 365
+    "HDSL2_SHDSL_LINE_MIB.db" : {
+        "dsn" : "DBI:mysql:database=gerty;host=localhost",
+        "username" : "gerty_ro",
+        "password" : "gerty_ro"
+    }
 }

@@ -23,22 +23,33 @@ sub startup
         if( $self->siteconfig($report . '.enabled') )
         {
             $self->log->debug('Report enabled in siteconfig: ' . $report);
-            
+
             my $ok = 1;
             my $report_params = {};
-            foreach my $attr ('dsn', 'username', 'password', 'history_days')
+            
+            my $dbkey = $report . '.db';
+            my $dbattr = $self->siteconfig($dbkey);
+            if( not defined($dbattr) )
             {
-                my $key = $report . '.' . $attr;
-                my $val = $self->siteconfig($key);
-                if( not defined($val) )
+                $self->log->error
+                    ('Missing a mandatory report attribute: ' . $dbkey);
+                $ok = 0;
+            }
+            else
+            {
+                foreach my $attr ('dsn', 'username', 'password')
                 {
-                    $self->log->error
-                        ('Missing a mandatory report attribute: ' . $key);
-                    $ok = 0;
-                }
-                else
-                {
-                    $report_params->{$attr} = $val;
+                    if( not defined($dbattr->{$attr}) )
+                    {
+                        $self->log->error
+                            ('Missing a mandatory configuration attribute: ' .
+                             $dbkey . '.' . $attr);
+                        $ok = 0;
+                    }
+                    else
+                    {
+                        $report_params->{$attr} = $dbattr->{$attr};
+                    }
                 }
             }
 
