@@ -34,8 +34,11 @@ C<perl -I `pwd`/setup_tools -MCPAN -e 'install Bundle::GertyReports'>
 
 =head1 CONTENTS
 
+DBI
 Mojolicious 1.1
 MojoX::Dispatcher::Qooxdoo::Jsonrpc 0.56
+Spreadsheet::WriteExcel
+Date::Manip
 
 =head1 AUTHOR
 
