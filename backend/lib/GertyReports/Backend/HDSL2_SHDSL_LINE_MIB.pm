@@ -7,6 +7,7 @@ has 'report_name' => 'HDSL Line Errors';
 has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
 has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
 
+has 'app';
 
 
 
@@ -277,7 +278,7 @@ sub get_line_timeseries
     
     my $sth = $self->dbh->prepare
         ('SELECT ' .
-         ' UNIX_TIMESTAMP(MEASURE_TS), ' .
+         ' UNIX_TIMESTAMP(MEASURE_TS) AS TS, ' .
          ' CRCA_COUNT, ' .
          ' ES_COUNT, ' .
          ' SES_COUNT, ' .
@@ -289,7 +290,8 @@ sub get_line_timeseries
          ' INTF_NAME=\'' . $intf . '\' AND ' .
          ' MEASURE_TS >= \'' . $dateFrom . '\' AND ' .
          ' MEASURE_TS < DATE_ADD(\'' . $dateFrom . '\',' .
-         '       INTERVAL ' . $days . ' DAY) ');
+         '       INTERVAL ' . $days . ' DAY) ' .
+         'ORDER BY TS');
 
     $sth->execute();
 
