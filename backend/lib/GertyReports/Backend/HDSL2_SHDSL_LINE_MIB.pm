@@ -22,8 +22,6 @@ sub search_hosts_and_lines
         ('SELECT DISTINCT HOSTNAME, INTF_NAME ' .
          'FROM HDSL_XTUC_15MIN_COUNTERS ' .
          'WHERE ' .
-         'MEASURE_TS >= ' .
-         '  DATE_SUB(CURRENT_DATE(), INTERVAL 14 DAY) AND ' .
          'HOSTNAME LIKE ? ' .
          ' ORDER BY HOSTNAME, INTF_NAME');
     
@@ -93,6 +91,21 @@ sub get_line_summary
         
     $self->connect();
 
+    my $max_date;
+    
+    {
+        my $result = $self->dbh->selectrow_arrayref
+            ('SELECT ' .
+             ' DATE(MAX(MEASURE_TS)) ' .
+             'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+             'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
+             'INTF_NAME=\'' . $intf . '\'');
+        if( defined($result->[0]) )
+        {
+            $max_date = $result->[0];
+        }
+    }
+        
     my $ret = {};
 
     # column names
@@ -106,7 +119,12 @@ sub get_line_summary
         'Hours'];
 
     $ret->{'data'} = [];
-    
+
+    if( not defined($max_date) )
+    {
+        return $ret;
+    }
+        
     foreach my $day (0..14)
     {
         my $result = $self->dbh->selectrow_hashref
@@ -122,11 +140,13 @@ sub get_line_summary
              'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
              'INTF_NAME=\'' . $intf . '\' AND ' .
              'MEASURE_TS >= ' .
-             '  DATE_SUB(CURRENT_DATE(), INTERVAL ' . $day . ' DAY) ' .
+             '  DATE_SUB(\'' . $max_date . '\',' .
+             '           INTERVAL ' . $day . ' DAY) ' .
              'AND ' .
              'MEASURE_TS < ' .
-             '  DATE_SUB(CURRENT_DATE(), INTERVAL ' . ($day-1) . ' DAY) ');
-
+             '  DATE_SUB(\'' . $max_date . '\',' .
+             '           INTERVAL ' . ($day-1) . ' DAY) ');
+        
         if( defined($result->{'INTVLS'}) and $result->{'INTVLS'} > 0 )
         {
             push(@{$ret->{'data'}},
