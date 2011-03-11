@@ -54,6 +54,9 @@ source/index.html: source/index.html.in
 build/index.html: source/index.html.in build
 	$(SUBST) source/index.html.in > build/index.html
 
+build:
+	$(MKDIR_P) build
+
 qx-source-all: generate.py
 	$(PYTHON) generate.py source-all
 
