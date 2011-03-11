@@ -40,7 +40,6 @@ EXTRA_DIST = \
 	Manifest.json \
 	source/index.html.in
 
-
 generate.py: generate.py.in
 	$(SUBST) generate.py.in > generate.py
 	$(CHMOD) u+x generate.py
@@ -79,13 +78,13 @@ install-data-local: build
 	cd build && find . -type f -print >../list.tmp
 	for f in `cat list.tmp`; do \
 	  $(INSTALL_DATA) build/$$f $(DESTDIR)$(frontenddir)/$$f; done; \
-	rm -f list.tmp
+	$(RM) -f list.tmp
 
 uninstall-local: build
 	find build -type d -print >list.tmp
 	for d in `cat list.tmp`; do \
 	  rm -r $(DESTDIR)$(frontenddir)/$$d; done
-	rm -f list.tmp
+	$(RM) -f list.tmp
 
 FRONTEND_DIST_DIRS = build source/class source/resource source/translation
 
@@ -96,6 +95,8 @@ dist-hook: build
 	find $(FRONTEND_DIST_DIRS) -type f -print >list.tmp
 	for f in `cat list.tmp`; do \
 	  cp $$f $(distdir)/$$f; done
-	rm -f list.tmp
+	$(RM) -f list.tmp
 
-
+distclean-local:
+	$(RM) -rf build
+	$(RM) -rf cache

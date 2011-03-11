@@ -55,7 +55,7 @@ install-data-local:
 	find lib \( -name '*.pm' \) -type f -print >list.tmp
 	for f in `cat list.tmp`; do \
 	  $(INSTALL_DATA) $$f $(DESTDIR)$(backenddir)/$$f; done
-	rm -f list.tmp
+	$(RM) -f list.tmp
 	if test ! -e @backendsitecfg@; then \
 	  $(INSTALL_DATA) gerty_reports_siteconfig.json @backendsitecfg@; fi
 
@@ -63,8 +63,8 @@ install-data-local:
 uninstall-local:
 	find lib -type d -print >list.tmp
 	for d in `cat list.tmp`; do \
-	  rm -r $(DESTDIR)$(backenddir)/$$d; done
-	rm -f list.tmp
+	  $(RM) -r $(DESTDIR)$(backenddir)/$$d; done
+	$(RM) -f list.tmp
 
 
 dist-hook:
@@ -74,4 +74,4 @@ dist-hook:
 	find lib \( -name '*.pm' \) -type f -print >list.tmp
 	for f in `cat list.tmp`; do \
 	  cp $$f $(distdir)/$$f; done
-	rm -f list.tmp
+	$(RM) -f list.tmp
