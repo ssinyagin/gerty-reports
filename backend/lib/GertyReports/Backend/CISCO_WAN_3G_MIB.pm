@@ -1,91 +1,27 @@
-package GertyReports::Backend::HDSL2_SHDSL_LINE_MIB;
+package GertyReports::Backend::CISCO_WAN_3G_MIB;
 
 use Mojo::Base 'GertyReports::DBLink';
 
 
-has 'report_name' => 'HDSL Line Errors';
-has 'report_description' => '15-minute HDSL2/SHDSL line error statistics';
-has 'main_table' => 'HDSL_XTUC_15MIN_COUNTERS';
+has 'report_name' => '3G GSM Signal Statistics';
+has 'report_description' => '1-minute RSSI statistics for Cisco 3G GSM modems';
+has 'main_table' => 'C3G_GSM_RSSI_MINUTE_HISTORY';
 
 has 'app';
 
 
-
-sub search_hosts_and_lines
-{
-    my $self = shift;
-    my $pattern = shift;
-    my $limit = shift;
-    
-    $self->connect();
-
-    my $sth = $self->dbh->prepare
-        ('SELECT DISTINCT HOSTNAME, INTF_NAME ' .
-         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
-         'WHERE ' .
-         'HOSTNAME LIKE ? ' .
-         ' ORDER BY HOSTNAME, INTF_NAME');
-    
-    $sth->execute( $pattern );
-
-    my $ret = [];
-    while( scalar(@{$ret}) < $limit and
-           my $data = $sth->fetchrow_arrayref )
-    {
-        my($hostname, $intf) = @{$data};
-        
-        push(@{$ret},
-             {
-                 'label' => $hostname . ': ' . $intf,
-                 'hostname' => $hostname,
-                 'interface' => $intf,
-             });
-    }
-
-    $sth->finish();
-    $self->disconnect();
-
-    return $ret;
-}
+# We assume that there's always one 3G cellular interface per device.
+# If it's not so, some queries need to be modified
 
 
-    
-
-sub get_host_ports
+sub get_rssi_summary
 {
     my $self = shift;
     my $hostname = shift;
-
-    $self->connect();
-
-    my $sth = $self->dbh->prepare
-        ('SELECT DISTINCT INTF_NAME ' .
-         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
-         'WHERE HOSTNAME=?');
-
-    $sth->execute( $hostname );
-
-    my $ret = [];
-    while( my $data = $sth->fetchrow_arrayref )
-    {
-        push(@{$ret}, $data->[0]);
-    }
-
-    $self->disconnect();
-    return $ret;
-}
-
-
-
-sub get_line_summary
-{
-    my $self = shift;
-    my $hostname = shift;
-    my $intf = shift;
 
     if( not $self->is_mysql() )
     {
-        my $msg = 'Only MySQL is currently supported by get_line_summary()';
+        my $msg = 'Only MySQL is currently supported by get_rssi_summary()';
         $self->log->fatal($msg);
         die($msg);
     }
@@ -98,48 +34,43 @@ sub get_line_summary
         my $result = $self->dbh->selectrow_arrayref
             ('SELECT ' .
              ' DATE(MAX(MEASURE_TS)) ' .
-             'FROM HDSL_XTUC_15MIN_COUNTERS ' .
-             'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
-             'INTF_NAME=\'' . $intf . '\'');
+             'FROM C3G_GSM_RSSI_MINUTE_HISTORY ' .
+             'WHERE HOSTNAME=\'' . $hostname . '\'');
         if( defined($result->[0]) )
         {
             $max_date = $result->[0];
         }
     }
-        
+
+    
     my $ret = {};
 
     # column names
     $ret->{'labels'} = [
         'Date',
-        'CRC Err',
-        'ES',
-        'SES',
-        'LOSWS',
-        'UAS',
+        'Min RSSI',
+        'Avg RSSI',
+        'Std. Dev',
         'Hours'];
 
     $ret->{'data'} = [];
-
+    
     if( not defined($max_date) )
     {
         return $ret;
     }
-        
+
     foreach my $day (0..14)
     {
         my $result = $self->dbh->selectrow_hashref
             ('SELECT ' .
              ' DATE(MIN(MEASURE_TS)) AS DT, ' .
-             ' MAX(ES_COUNT) AS ES, ' .
-             ' MAX(SES_COUNT) AS SES, ' .
-             ' MAX(CRCA_COUNT) AS CRCA, ' .
-             ' MAX(LOSWS_COUNT) AS LOSWS, ' .
-             ' MAX(UAS_COUNT) AS UAS, ' .
+             ' MAX(WEAKEST_RSSI) AS RSSI_MAX, ' .
+             ' AVG(WEAKEST_RSSI) AS RSSI_AVG, ' .
+             ' STDDEV_SAMP(WEAKEST_RSSI) AS RSSI_STDDEV, ' .
              ' COUNT(DISTINCT MEASURE_TS) AS INTVLS ' .
-             'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+             'FROM C3G_GSM_RSSI_MINUTE_HISTORY ' .
              'WHERE HOSTNAME=\'' . $hostname . '\' AND ' .
-             'INTF_NAME=\'' . $intf . '\' AND ' .
              'MEASURE_TS >= ' .
              '  DATE_SUB(\'' . $max_date . '\',' .
              '           INTERVAL ' . $day . ' DAY) ' .
@@ -153,12 +84,10 @@ sub get_line_summary
             push(@{$ret->{'data'}},
                  [
                   $result->{'DT'},
-                  $result->{'CRCA'},
-                  $result->{'ES'},
-                  $result->{'SES'},
-                  $result->{'LOSWS'},
-                  $result->{'UAS'},
-                  $result->{'INTVLS'}/4,
+                  $result->{'RSSI_MAX'},
+                  sprintf('%.2f', $result->{'RSSI_AVG'}),
+                  sprintf('%.2f', $result->{'RSSI_STDDEV'}),
+                  sprintf('%.2f', $result->{'INTVLS'}/60),
                  ]);
         }
     }
@@ -168,7 +97,8 @@ sub get_line_summary
 }
 
 
-# Get Top N DSL lines by error counter
+# Get Top N 3G modems by worst RSSI
+# $topColumn is one of RSSI_MIN, RSSI_AVG, RSSI_STDDEV
 
 sub get_topn
 {
@@ -192,33 +122,30 @@ sub get_topn
     # column names
     $ret->{'labels'} = [
         'Device',
-        'Port',
-        'CRC Err',
-        'ES',
-        'SES',
-        'LOSWS',
-        'UAS',
+        '', # empty port name
+        'Min RSSI',
+        'Avg RSSI',
+        'Std. Dev.',
         'Hours'];
 
     $ret->{'data'} = [];
+
+    # Find lowest RSSI or highest Stddev
     
     my $sth = $self->dbh->prepare
         ('SELECT ' .
          ' HOSTNAME, ' .
-         ' INTF_NAME, ' .
-         ' MAX(ES_COUNT) AS ES, ' .
-         ' MAX(SES_COUNT) AS SES, ' .
-         ' MAX(CRCA_COUNT) AS CRCA, ' .
-         ' MAX(LOSWS_COUNT) AS LOSWS, ' .
-         ' MAX(UAS_COUNT) AS UAS, ' .
+         ' MIN(WEAKEST_RSSI) AS RSSI_MIN, ' .
+         ' AVG(WEAKEST_RSSI) AS RSSI_AVG, ' .
+         ' STDDEV_SAMP(WEAKEST_RSSI) * (-1) AS RSSI_STDDEV, ' .
          ' COUNT(DISTINCT MEASURE_TS) AS INTVLS ' .
-         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+         'FROM C3G_GSM_RSSI_MINUTE_HISTORY ' .
          'WHERE ' . 
          ' MEASURE_TS >= \'' . $dateFrom . '\' AND ' .
          ' MEASURE_TS < DATE_ADD(\'' . $dateFrom . '\',' .
          '       INTERVAL ' . $days . ' DAY) ' .
-         'GROUP BY HOSTNAME, INTF_NAME ' .
-         'ORDER BY ' . $topColumn . ' DESC ' .
+         'GROUP BY HOSTNAME ' .
+         'ORDER BY ' . $topColumn . ' ASC ' .
          'LIMIT ' . $topNum);
     
     
@@ -231,13 +158,11 @@ sub get_topn
             push(@{$ret->{'data'}},
                  [
                   $result->{'HOSTNAME'},
-                  $result->{'INTF_NAME'},
-                  $result->{'CRCA'},
-                  $result->{'ES'},
-                  $result->{'SES'},
-                  $result->{'LOSWS'},
-                  $result->{'UAS'},
-                  $result->{'INTVLS'}/4,
+                  '',
+                  $result->{'RSSI_MIN'},
+                  sprintf('%.2f', $result->{'RSSI_AVG'}),
+                  sprintf('%.2f', $result->{'RSSI_STDDEV'} * (-1)),
+                  sprintf('%.2f', $result->{'INTVLS'}/60),
                  ]);
         }
     }
@@ -248,11 +173,10 @@ sub get_topn
     
 
 
-sub get_line_timeseries
+sub get_rssi_timeseries
 {
     my $self = shift;
     my $hostname = shift;
-    my $intf = shift;
     my $dateFrom = shift;
     my $days = shift;
     
@@ -269,22 +193,17 @@ sub get_line_timeseries
     
     # column names
     $ret->{'labels'} =
-        ['Date', 'CRC Err', 'ES', 'SES', 'LOSWS', 'UAS'];
+        ['Date', 'RSSI'];
 
     $ret->{'data'} = [];
     
     my $sth = $self->dbh->prepare
         ('SELECT ' .
          ' UNIX_TIMESTAMP(MEASURE_TS) AS TS, ' .
-         ' CRCA_COUNT, ' .
-         ' ES_COUNT, ' .
-         ' SES_COUNT, ' .
-         ' LOSWS_COUNT, ' .
-         ' UAS_COUNT ' .
-         'FROM HDSL_XTUC_15MIN_COUNTERS ' .
+         ' WEAKEST_RSSI ' .
+         'FROM C3G_GSM_RSSI_MINUTE_HISTORY ' .
          'WHERE ' .
          ' HOSTNAME=\'' . $hostname . '\' AND ' .
-         ' INTF_NAME=\'' . $intf . '\' AND ' .
          ' MEASURE_TS >= \'' . $dateFrom . '\' AND ' .
          ' MEASURE_TS < DATE_ADD(\'' . $dateFrom . '\',' .
          '       INTERVAL ' . $days . ' DAY) ' .

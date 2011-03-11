@@ -97,7 +97,14 @@ sub search_hosts
     while( scalar(@{$ret}) < $limit and
            my $data = $sth->fetchrow_arrayref )
     {
-        push(@{$ret}, $data->[0]);
+        push(@{$ret},
+             {
+                 'label' => $data->[0],
+                 'hostname' => $data->[0],
+                 'interface' => '',
+             });
+
+             
     }
 
     $sth->finish();

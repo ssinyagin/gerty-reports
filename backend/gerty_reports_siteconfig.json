@@ -2,7 +2,8 @@
     "Mojolicious.secret"     : "boo1thiuCheexai",
 
     "reports" : [
-        "HDSL2_SHDSL_LINE_MIB"
+        "HDSL2_SHDSL_LINE_MIB",
+        "CISCO_WAN_3G_MIB"
     ],
     
     "HDSL2_SHDSL_LINE_MIB.enabled" : 1,
@@ -10,5 +11,13 @@
         "dsn" : "DBI:mysql:database=gerty;host=localhost",
         "username" : "gerty_ro",
         "password" : "gerty_ro"
+    },
+
+    "CISCO_WAN_3G_MIB.enabled" : 1,
+    "CISCO_WAN_3G_MIB.db" : {
+        "dsn" : "DBI:mysql:database=gerty;host=localhost",
+        "username" : "gerty_ro",
+        "password" : "gerty_ro"
     }
+    
 }
