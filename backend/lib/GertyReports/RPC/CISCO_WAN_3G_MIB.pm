@@ -15,6 +15,7 @@ my %methods_allowed =
      'get_rssi_summary' => 1,
      'get_topn' => 1,
      'get_rssi_timeseries' => 1,
+     'get_hw_history' => 1,
     );
 
 sub allow_rpc_access
@@ -108,6 +109,22 @@ sub get_rssi_timeseries
     return $ret;
 }
 
+
+
+sub get_hw_history
+{
+    my $self = shift;
+    my $hostname = shift;
+
+    $self->log->debug('RPC call: get_hw_history, ' . $hostname);
+    
+    my $ret = $self->backend->get_hw_history($hostname);
+    
+    $self->log->debug('Retrieved ' . scalar(@{$ret->{'data'}}) . ' rows');
+    
+    return $ret;
+}
+    
 
 
     

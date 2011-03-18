@@ -1,6 +1,6 @@
 /*
-#asset(qx/icon/${qx.icontheme}/16/actions/system-search.png)
-#asset(qx/icon/${qx.icontheme}/16/apps/office-chart.png)
+#asset(qx/icon/${qx.icontheme}/22/actions/system-search.png)
+#asset(qx/icon/${qx.icontheme}/22/apps/office-chart.png)
 #asset(qx/icon/${qx.icontheme}/22/apps/utilities-statistics.png)
 */
 
@@ -30,16 +30,22 @@ qx.Class.define
 
              tabView.add(this.initSeachTab());
              tabView.add(this.initTopNTab());
+             this.initAdditionalTabs(tabView);
              this.add(tabView);
          },
 
+         initAdditionalTabs : function(tabView)
+         {
+             /* do nothing - let subclasses override this */
+         },
+             
          initSeachTab : function ()
          {
              var statusBar = this;
              var reportWindow = this;
              
              var page = new qx.ui.tabview.Page(
-                 "Search", "icon/16/actions/system-search.png");
+                 "Search", "icon/22/actions/system-search.png");
              page.setLayout(new qx.ui.layout.Grow());
              page.addListener(
                  "appear",
@@ -120,67 +126,7 @@ qx.Class.define
              // bind search field with the hostList
              
              var searchListController =
-                 new qx.data.controller.List(null, hostList, "label");
-
-             // make every input in the searchField update the hostList
-             // with 200ms delay
-
-             var searchTimer = qx.util.TimerManager.getInstance();
-             var searchTimerId = null;
-             
-             searchField.addListener(
-                 "changeValue",
-                 function(e)
-                 {
-                     if( searchTimerId != null )
-                     {
-                         searchTimer.stop(searchTimerId);
-                     }
-
-                     statusBar.setStatus("Searching...");
-                     
-                     searchTimerId = searchTimer.start(
-                         function(userData)
-                         {
-                             searchTimerId = null;
-                             if( userData != null && userData.length > 0 )
-                             {
-                                 var rpc =
-                                     gertyreports.BackendConnection.
-                                     getInstance();
-                                 rpc.setServiceName(
-                                     reportWindow.rpcServiceName);
-                                 rpc.callAsyncSmart(
-                                     function(result)
-                                     {
-                                         var model = 
-                                             qx.data.marshal.Json.createModel(
-                                                 result);
-                                         
-                                         searchListController.setModel(model);
-                                         
-                                         if( result.length == 50 )
-                                         {
-                                             statusBar.setStatus(
-                                                 "Search results limited " +
-                                                     "to 50 lines")
-                                         }
-                                         else
-                                         {
-                                             statusBar.setStatus(
-                                                 "Search results: " +
-                                                     result.length + " lines");
-                                         }
-                                     },
-                                     reportWindow.rpcSearchDevicesMethod,
-                                     userData + '%', 50);
-                             }
-                         },
-                         0,
-                         null,
-                         e.getData(),
-                         200);
-                 });
+                 this.bindSearchInputWithHostlist(searchField, hostList);
              
              
              // bind searchList with the statistics widget
@@ -304,7 +250,7 @@ qx.Class.define
              var reportWindow = this;
              
              var page = new qx.ui.tabview.Page(
-                 "Top N", "icon/16/apps/office-chart.png");
+                 "Top N", "icon/22/apps/office-chart.png");
              page.setLayout(new qx.ui.layout.Grow());
              
              var rowsContainer =
@@ -531,6 +477,78 @@ qx.Class.define
              {
                  new klass(hostname, intf, dateFrom);
              }
+         },
+
+
+         bindSearchInputWithHostlist : function(searchField, hostList)
+         {
+             var statusBar = this;
+             var reportWindow = this;
+
+             var searchListController =
+                 new qx.data.controller.List(null, hostList, "label");
+             
+             // make every input in the searchField update the hostList
+             // with 200ms delay
+             
+             var searchTimer = qx.util.TimerManager.getInstance();
+             var searchTimerId = null;
+             
+             searchField.addListener(
+                 "changeValue",
+                 function(e)
+                 {
+                     if( searchTimerId != null )
+                     {
+                         searchTimer.stop(searchTimerId);
+                     }
+
+                     statusBar.setStatus("Searching...");
+                     
+                     searchTimerId = searchTimer.start(
+                         function(userData)
+                         {
+                             searchTimerId = null;
+                             if( userData != null && userData.length > 0 )
+                             {
+                                 var rpc =
+                                     gertyreports.BackendConnection.
+                                     getInstance();
+                                 rpc.setServiceName(
+                                     reportWindow.rpcServiceName);
+                                 rpc.callAsyncSmart(
+                                     function(result)
+                                     {
+                                         var model = 
+                                             qx.data.marshal.Json.createModel(
+                                                 result);
+                                         
+                                         searchListController.setModel(model);
+                                         
+                                         if( result.length == 50 )
+                                         {
+                                             statusBar.setStatus(
+                                                 "Search results limited " +
+                                                     "to 50 lines")
+                                         }
+                                         else
+                                         {
+                                             statusBar.setStatus(
+                                                 "Search results: " +
+                                                     result.length + " lines");
+                                         }
+                                     },
+                                     reportWindow.rpcSearchDevicesMethod,
+                                     userData + '%', 50);
+                             }
+                         },
+                         0,
+                         null,
+                         e.getData(),
+                         200);
+                 });
+             
+             return searchListController;
          }
      }
  });

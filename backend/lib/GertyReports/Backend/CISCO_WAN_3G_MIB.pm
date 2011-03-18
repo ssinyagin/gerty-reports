@@ -9,6 +9,7 @@ has 'main_table' => 'C3G_GSM_RSSI_MINUTE_HISTORY';
 
 has 'app';
 
+use JSON ();
 
 # We assume that there's always one 3G cellular interface per device.
 # If it's not so, some queries need to be modified
@@ -224,5 +225,81 @@ sub get_rssi_timeseries
 
 
 
+sub get_hw_history
+{
+    my $self = shift;
+    my $hostname = shift;
+
+    my $json = new JSON;        
+    
+    $self->connect();
+    
+    my $sth = $self->dbh->prepare
+        ('SELECT ' .
+         ' UPDATE_TS, ' .
+         ' HW_JSON ' .
+         'FROM C3G_HARDWAREINFO ' .
+         'WHERE ' .
+         ' HOSTNAME=\'' . $hostname . '\' ' .
+         'ORDER BY UPDATE_TS');
+
+
+    # bring schema-less attributes into tabular form
+
+    my $n_columns = 0;    
+    # column name => index
+    my $col_idx = {
+        'Date' => $n_columns++,
+        'entPhysicalName' => $n_columns++,
+        'entPhysicalDescr' => $n_columns++,
+        'entPhysicalHardwareRev' => $n_columns++,
+        'entPhysicalFirmwareRev' => $n_columns++,
+        'entPhysicalSerialNum' => $n_columns++,
+    };
+    my $data = [];
+
+    
+    $sth->execute();
+    
+    while( (my @row = $sth->fetchrow_array()) )
+    {
+        my $date = shift @row;
+        my $hw_data = $json->decode(shift @row);
+
+        my $datarow = [$date];
+        
+        foreach my $col (sort keys %{$hw_data})
+        {
+            # if a new column appears, we add it to the right columns
+            # of the table
+            if( not defined($col_idx->{$col}) )
+            {
+                $col_idx->{$col} = $n_columns++;
+            }
+
+            $datarow->[$col_idx->{$col}] = $hw_data->{$col};
+        }
+        push(@{$data}, $datarow);
+    }
+    
+    $self->disconnect();
+  
+    # column names
+    my $labels = [];
+    while( my($col, $idx) = each %{$col_idx} )
+    {
+        $col =~ s/^entPhysical//o;
+        $labels->[$idx] = $col;
+    }
+    
+    my $ret = {
+        'labels' => $labels,
+        'data' => $data
+    };
+
+    return $ret;
+}
+
+    
     
 1;

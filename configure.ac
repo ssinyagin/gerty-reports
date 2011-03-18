@@ -55,7 +55,7 @@ if test "$enable_pkgonly" != yes; then
 
    for module in \
        'DBI' 'Mojolicious' 'MojoX::Dispatcher::Qooxdoo::Jsonrpc' \
-       'Spreadsheet::WriteExcel' 'Date::Manip'
+       'Spreadsheet::WriteExcel' 'Date::Manip' 'JSON'
    do
      AC_MSG_CHECKING([presence of $module])
      if ${PERL} ${PERLOPTS} -e 'use '$module 2>/dev/null; then
