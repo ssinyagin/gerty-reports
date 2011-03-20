@@ -66,9 +66,8 @@ sub dispatch
 
     foreach my $label (@{$result->{'labels'}})
     {
-        my $width = ($col == 0) ? 20:10;
-        $worksheet->set_column($col, $col, $width, $f_column);
-        $worksheet->write($row, $col++, $label, $f_tblheader);
+        $worksheet->set_column($col, $col, 25, $f_column);
+        $worksheet->write_string($row, $col++, $label, $f_tblheader);
     }
 
     foreach my $datarow (@{$result->{'data'}})
@@ -76,16 +75,39 @@ sub dispatch
         $col = 0;
         $row++;
 
-        # we assume that the firsrt column is a UNIX timestamp        
-        $worksheet->write_date_time
-            ($row, $col++,
-             Date::Manip::UnixDate('epoch ' . shift(@{$datarow}), '%O'),
-             $f_date);
-
-        # we assume that other columns are numbers
-        while( defined(my $num = shift(@{$datarow})) )
+        for( $col=0; $col < scalar(@{$datarow}); $col++)
         {
-            $worksheet->write_number($row, $col++, $num);
+            my $value = $datarow->[$col];
+            my $type = '';
+            if( defined($result->{'coltypes'}) and
+                defined($result->{'coltypes'}[$col]) )
+            {
+                $type = $result->{'coltypes'}[$col];
+            }
+
+            if( $type eq 'number' )
+            {
+                $worksheet->write_number($row, $col, $value);
+            }
+            elsif( $type eq 'string' )
+            {
+                $worksheet->write_string($row, $col, $value);
+            }
+            elsif( $type eq 'unixtime' )
+            {
+                $worksheet->write_date_time
+                    ($row, $col,
+                     Date::Manip::UnixDate('epoch ' . $value, '%O'),
+                     $f_date);
+            }
+            elsif( $type eq 'date_time' )
+            {
+                $worksheet->write_date_time($row, $col, $value, $f_date);
+            }
+            else
+            {
+                $worksheet->write($row, $col, $value);
+            }
         }
     }
     

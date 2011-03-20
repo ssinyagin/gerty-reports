@@ -1,5 +1,6 @@
 /*
 #asset(qx/icon/${qx.icontheme}/22/apps/utilities-log-viewer.png)
+#asset(qx/icon/${qx.icontheme}/22/apps/office-spreadsheet.png)
 */
 qx.Class.define
 ("gertyreports.r.CISCO_WAN_3G_MIB",
@@ -200,6 +201,24 @@ qx.Class.define
                  },
                  searchListController);            
 
+             // Excel export button
+             firstRow.add(new qx.ui.core.Spacer(500, 0));
+
+             var xlsButton =
+                 new qx.ui.form.Button(
+                     null, "icon/22/apps/office-spreadsheet.png");
+             xlsButton.setToolTipText(
+                 "Export all hardware history as Excel file");
+             firstRow.add(xlsButton);
+
+             xlsButton.addListener(
+                 "execute",
+                 function(e)
+                 {
+                     window.location.href =
+                         qx.core.Setting.get("gertyreports.export.url") +
+                         "/xls/CISCO_WAN_3G_MIB/get_hw_history";
+                 });
              
              return page;
          }

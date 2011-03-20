@@ -270,6 +270,8 @@ sub get_line_timeseries
     # column names
     $ret->{'labels'} =
         ['Date', 'CRC Err', 'ES', 'SES', 'LOSWS', 'UAS'];
+    $ret->{'coltypes'} =
+        ['unixtime', 'number', 'number', 'number', 'number', 'number'];
 
     $ret->{'data'} = [];
     

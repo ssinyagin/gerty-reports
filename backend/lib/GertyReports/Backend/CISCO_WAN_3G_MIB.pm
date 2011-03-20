@@ -195,6 +195,8 @@ sub get_rssi_timeseries
     # column names
     $ret->{'labels'} =
         ['Date', 'RSSI'];
+    $ret->{'coltypes'} =
+        ['unixtime', 'number'];
 
     $ret->{'data'} = [];
     
@@ -233,29 +235,53 @@ sub get_hw_history
     my $json = new JSON;        
     
     $self->connect();
+
+    my $all_hosts = ((not defined($hostname)) or (length($hostname) == 0));
+
+    my $sql;
+    if( $all_hosts )
+    {
+        $sql = 'SELECT ' .
+            ' HOSTNAME, ' .
+            ' BEGIN_TS, ' .
+            ' END_TS, ' .
+            ' HW_JSON ' .
+            'FROM C3G_HARDWAREINFO ' .
+            'ORDER BY HOSTNAME, BEGIN_TS';
+    }
+    else
+    {
+        $sql = 'SELECT ' .
+            ' BEGIN_TS, ' .
+            ' END_TS, ' .
+            ' HW_JSON ' .
+            'FROM C3G_HARDWAREINFO ' .
+            'WHERE ' .
+            ' HOSTNAME=\'' . $hostname . '\' ' .
+            'ORDER BY BEGIN_TS';
+    }
     
-    my $sth = $self->dbh->prepare
-        ('SELECT ' .
-         ' UPDATE_TS, ' .
-         ' HW_JSON ' .
-         'FROM C3G_HARDWAREINFO ' .
-         'WHERE ' .
-         ' HOSTNAME=\'' . $hostname . '\' ' .
-         'ORDER BY UPDATE_TS');
+    my $sth = $self->dbh->prepare($sql);
 
 
     # bring schema-less attributes into tabular form
 
     my $n_columns = 0;    
     # column name => index
-    my $col_idx = {
-        'Date' => $n_columns++,
-        'entPhysicalName' => $n_columns++,
-        'entPhysicalDescr' => $n_columns++,
-        'entPhysicalHardwareRev' => $n_columns++,
-        'entPhysicalFirmwareRev' => $n_columns++,
-        'entPhysicalSerialNum' => $n_columns++,
-    };
+    my $col_idx = {};
+    if( $all_hosts )
+    {
+        $col_idx->{'Hostname'} = $n_columns++;
+    }
+    
+    $col_idx->{'BeginDate'} = $n_columns++;
+    $col_idx->{'EndDate'} = $n_columns++,
+    $col_idx->{'entPhysicalName'} = $n_columns++;
+    $col_idx->{'entPhysicalDescr'} = $n_columns++;
+    $col_idx->{'entPhysicalHardwareRev'} = $n_columns++;
+    $col_idx->{'entPhysicalFirmwareRev'} = $n_columns++;
+    $col_idx->{'entPhysicalSerialNum'} = $n_columns++;
+    
     my $data = [];
 
     
@@ -263,10 +289,19 @@ sub get_hw_history
     
     while( (my @row = $sth->fetchrow_array()) )
     {
-        my $date = shift @row;
-        my $hw_data = $json->decode(shift @row);
+        my $datarow = [];
+        if( $all_hosts )
+        {
+            # Hostname
+            push(@{$datarow}, shift @row);
+        }
 
-        my $datarow = [$date];
+        # start and end dates
+        push(@{$datarow}, shift @row);
+        push(@{$datarow}, shift @row);
+        
+        # process hardware data
+        my $hw_data = $json->decode(shift @row);
         
         foreach my $col (sort keys %{$hw_data})
         {
@@ -286,15 +321,26 @@ sub get_hw_history
   
     # column names
     my $labels = [];
+    my $coltypes = [];
     while( my($col, $idx) = each %{$col_idx} )
     {
         $col =~ s/^entPhysical//o;
+        if( $col =~ /Date/ )
+        {
+            $coltypes->[$idx] = 'date_time';
+        }
+        else
+        {
+            $coltypes->[$idx] = 'string';
+        }
+        
         $labels->[$idx] = $col;
     }
     
     my $ret = {
         'labels' => $labels,
-        'data' => $data
+        'data' => $data,
+        'coltypes' => $coltypes,
     };
 
     return $ret;

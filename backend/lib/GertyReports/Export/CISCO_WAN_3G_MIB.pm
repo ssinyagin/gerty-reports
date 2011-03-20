@@ -36,6 +36,21 @@ sub get_rssi_timeseries
 }
 
 
+sub get_hw_history
+{
+    my $self = shift;
+    my $controller = shift;
+
+    my $ret = $self->backend->get_hw_history();
+    
+    $ret->{'title'} = 'Cisco 3G Hardware History';
+    
+    $self->log->debug('get_hw_history: retrieved ' .
+                      scalar(@{$ret->{'data'}}) . ' rows');
+    return $ret;
+}
+
+
 
     
 1;
