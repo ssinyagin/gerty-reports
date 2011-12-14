@@ -12,7 +12,7 @@ sub startup
 {
     my $self = shift;
     
-    my $config = $self->plugin('json_config');
+    my $config = $self->plugin('JSONConfig');
 
     # Initialize the reports from siteconfig
     my $known_reports = $self->siteconfig('reports');

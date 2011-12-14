@@ -1,0 +1,21 @@
+#!@PERL@
+
+use strict;
+use warnings;
+use Mojolicious::Command::fastcgi;
+
+use File::Basename 'dirname';
+use File::Spec;
+
+use lib join '/', File::Spec->splitdir(dirname(__FILE__)), '..', 'lib';
+
+
+# Application
+$ENV{MOJO_APP} ||= 'GertyReports';
+
+# Start FCGI service
+my $fastcgi = Mojolicious::Command::fastcgi->new;
+$fastcgi->run;
+
+
+

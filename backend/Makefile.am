@@ -21,7 +21,8 @@ SUBST = @abs_top_builddir@/setup_tools/substvars.sh
 scrpdir = @backenddir@/script
 
 scrp_SCRIPTS = \
-	script/gerty_reports
+	script/gerty_reports \
+	script/gerty_reports.fcgi
 
 cfgdir = @backenddir@
 nodist_cfg_DATA = gerty_reports.json
@@ -31,6 +32,7 @@ CLEANFILES = $(scrp_SCRIPTS) $(nodist_cfg_DATA)
 
 EXTRA_DIST = \
 	script/gerty_reports.in \
+	script/gerty_reports.fcgi.in \
 	gerty_reports.json.in \
 	gerty_reports_siteconfig.json
 
@@ -40,6 +42,9 @@ script/gerty_reports: script/gerty_reports.in
 	$(SUBST) script/gerty_reports.in > script/gerty_reports
 	$(CHMOD) a+x script/gerty_reports
 
+script/gerty_reports.fcgi: script/gerty_reports.fcgi.in
+	$(SUBST) script/gerty_reports.fcgi.in > script/gerty_reports.fcgi
+	$(CHMOD) a+x script/gerty_reports.fcgi
 
 gerty_reports.json: gerty_reports.json.in
 	$(SUBST) gerty_reports.json.in > gerty_reports.json

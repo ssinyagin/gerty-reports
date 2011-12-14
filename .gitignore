@@ -15,6 +15,7 @@ Makefile.in
 */Makefile.in
 backend/gerty_reports.json
 backend/script/gerty_reports
+backend/script/gerty_reports.fcgi
 frontend/build/
 frontend/cache/
 frontend/source/script/
