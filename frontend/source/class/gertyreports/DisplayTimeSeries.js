@@ -109,7 +109,7 @@ qx.Class.define
                          dateFormatter.format(dateFrom.getValue());
                      
                      window.location.href =
-                         qx.core.Setting.get("gertyreports.export.url") +
+                         qx.core.Environment.get("gertyreports.export.url") +
                          '/xls/' + reportWindow.exportUrlPath +
                          '?hostname=' + reportWindow.hostname +
                          '&intf=' + reportWindow.intf +

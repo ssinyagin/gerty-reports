@@ -12,11 +12,9 @@ qx.Class.define
          main : function()
          {
              this.base(arguments);
-             if (qx.core.Variant.isSet("qx.debug", "on"))
+             if (qx.core.Environment.get("qx.debug"))
              {
                  qx.log.appender.Native;
-                 // support additional cross-browser console.
-                 // Press F7 to toggle visibility
                  qx.log.appender.Console;
              }
 

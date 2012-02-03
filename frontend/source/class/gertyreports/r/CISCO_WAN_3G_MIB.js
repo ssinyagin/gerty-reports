@@ -216,7 +216,7 @@ qx.Class.define
                  function(e)
                  {
                      window.location.href =
-                         qx.core.Setting.get("gertyreports.export.url") +
+                         qx.core.Environment.get("gertyreports.export.url") +
                          "/xls/CISCO_WAN_3G_MIB/get_hw_history";
                  });
              

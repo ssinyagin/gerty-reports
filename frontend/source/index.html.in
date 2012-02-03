@@ -5,9 +5,13 @@
   <title>Gerty Reports</title>
   <script type="text/javascript">
   // Site-specific settings
-  qxsettings = {};
-  qxsettings["gertyreports.backend.url"] = "@backendurl@/@jsonrpcpath@";
-  qxsettings["gertyreports.export.url"] = "@backendurl@/@exportpath@";
+  window.qx =
+  {
+    $$environment : {
+        "gertyreports.backend.url" : "@backendurl@/@jsonrpcpath@",
+        "gertyreports.export.url"  : "@backendurl@/@exportpath@"
+    }
+  }
   </script>
   <script type="text/javascript" src="script/gertyreports.js"></script>
 </head>
