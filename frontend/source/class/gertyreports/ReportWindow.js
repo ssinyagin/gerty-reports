@@ -12,6 +12,7 @@ qx.Class.define
          this.setHeight(500);
          this.setWidth(1000);
          this.setShowStatusbar(true);
+         this.setShowMinimize(false);
          this.open();
          
          gertyreports.ReportWindow.desktop.add(this, {
